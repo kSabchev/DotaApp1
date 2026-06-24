@@ -260,11 +260,22 @@ export interface SynergyPair {
   label: string;
 }
 
+// When (in the pick order) it's wisest to commit a hero, given how counterable it is.
+export type PickTiming = 'commit_now' | 'safe_now' | 'save_for_later';
+
+// The draft-position context for a team's next pick.
+export interface PickContext {
+  enemyPicksAfter: number;  // enemy picks remaining after this team's next pick
+  myPicksAfter: number;     // this team's own picks remaining after the next one
+  isMyLastPick: boolean;
+}
+
 export interface HeroRecommendation {
   heroId: number;
   score: number;
   reasons: string[];
   tag?: string;
+  timing?: PickTiming;
 }
 
 export interface TeamAnalysis {

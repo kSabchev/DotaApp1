@@ -251,6 +251,22 @@ First slice of the "draft brain" direction: which picked heroes get a **free gam
 - `HeroFreedomPanel.tsx` renders it per team in `DraftSummary` (portrait + status badge + fragility chip + the disrupting enemies).
 - `heroFreedom.test.ts` — fragility (hand + derived), free game, curated counter, mechanic counter, fragility-scaling (48 tests total).
 
+### Session 16 — Flex-aware next-pick suggestions
+Second slice of the "draft brain": pick suggestions now reason about **role coverage with flex**, not one fixed role per hero.
+- `roleOptions(hero, assignments)` → the set of positions a hero can play (preferred ∪ flex ∪ metaRole; a user-assigned role locks it). `coveredRoles()` runs **bipartite matching** (Kuhn's augmenting paths) to find the maximum set of roles the picks can simultaneously cover, so a flex pick can shift to free a slot.
+- `laneVerdict.missingRoles` is now flex-accurate — a role only shows as missing if no maximum assignment can cover it (a carry/mid flex pick no longer makes mid look missing).
+- `rankPicks` scores candidates on **marginal coverage**: +8 for filling a genuinely open role (with a "Fills the open X slot" reason), +3 and a `flex` tag for a pick that can cover two open roles, and a penalty for a structurally-redundant pick when roles are still needed.
+- `AnalysisPanel` "Suggested Picks" header now shows a **"still need: Sup, Hard Sup"** hint.
+- 3 new tests in `draftPlanning.test.ts` (flex missingRoles, gap-filling vs redundant, flex tagging) — 51 tests total.
+
+### Session 17 — Draft-position timing
+Final slice of the "draft brain": *when* to commit a hero, based on how counterable it is and how many enemy picks can still respond.
+- `pickContextForTeam(slots, team, fromIndex)` → `{ enemyPicksAfter, myPicksAfter, isMyLastPick }` for the team's next pick. `enemyPicksAfter === 0` is a protected slot (the second-pick team's last pick) — a free game for counterable heroes.
+- Threaded as an optional `pickContext` through `analyzeTeam → rankPicks`. Each suggestion gets a `timing`: `commit_now` (protected slot or your final pick — fragile heroes get a bonus + "free game" reason), `save_for_later` (fragile + the enemy can still respond → penalty + "save for a later pick"), or `safe_now` (resilient → small early bonus). Your *last* pick never says "save for later" — there's nowhere later to save it.
+- `AnalysisPanel` shows a draft-position note for the team currently picking ("🔓 Last pick — free game", "Early pick — favour safe/flexible heroes", "N enemy picks can still respond") plus per-suggestion **commit now** / **save for last** badges.
+- 7 new tests in `pickTiming.test.ts` (slot counting, save-for-later, commit-now on protected/last-pick slots, no-context) — 58 tests total.
+- *Known minor gap:* the timing note is hidden on a team's very first pick (the analysis block requires ≥1 pick); it shows from the second pick onward.
+
 ---
 
 ## File Map

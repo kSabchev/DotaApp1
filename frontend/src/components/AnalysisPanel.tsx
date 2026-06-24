@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectRadiantPicks, selectDirePicks, selectAvailableHeroes, selectAllHeroes } from '../store/selectors';
-import { analyzeTeam } from '../utils/scoring';
+import { analyzeTeam, pickContextForTeam } from '../utils/scoring';
 import ScoreBar from './ScoreBar';
 import HeroPortrait from './HeroPortrait';
 import TeamTags from './TeamTags';
@@ -10,6 +10,7 @@ import LanePredictionsPanel from './LanePredictionsPanel';
 import BanThreatsPanel from './BanThreatsPanel';
 import MatchupItemPanel from './MatchupItemPanel';
 import MatchupGradesPanel from './MatchupGradesPanel';
+import { ROLE_LABEL } from './RolePicker';
 import type { Role } from '../types';
 
 interface Props {
@@ -22,15 +23,24 @@ export default function AnalysisPanel({ team }: Props) {
   const availableHeroes = useAppSelector(selectAvailableHeroes);
   const allHeroes = useAppSelector(selectAllHeroes);
   const roleAssignments = useAppSelector(s => s.draft.roleAssignments) as Record<number, Role>;
+  const slots = useAppSelector(s => s.draft.slots);
+  const currentSlotIndex = useAppSelector(s => s.draft.currentSlotIndex);
   const availableIds = availableHeroes.map(h => h.id);
 
   const myPicks = team === 'radiant' ? radiantPicks : direPicks;
   const enemyPicks = team === 'radiant' ? direPicks : radiantPicks;
 
+  // Draft-position context for this team's next pick (drives pick-timing advice).
+  const pickContext = useMemo(
+    () => pickContextForTeam(slots, team, currentSlotIndex),
+    [slots, currentSlotIndex, team],
+  );
+  const isMyTurn = slots[currentSlotIndex]?.phase === 'pick' && slots[currentSlotIndex]?.team === team;
+
   const analysis = useMemo(
-    () => analyzeTeam(myPicks, enemyPicks, availableIds, allHeroes, roleAssignments),
+    () => analyzeTeam(myPicks, enemyPicks, availableIds, allHeroes, roleAssignments, pickContext),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [myPicks.join(','), enemyPicks.join(','), availableIds.join(','), allHeroes.length, JSON.stringify(roleAssignments)],
+    [myPicks.join(','), enemyPicks.join(','), availableIds.join(','), allHeroes.length, JSON.stringify(roleAssignments), JSON.stringify(pickContext)],
   );
 
   const totalMax = 25 + 15 + 10 + 10 + 10 + 10 + 10;
@@ -257,9 +267,35 @@ export default function AnalysisPanel({ team }: Props) {
           {/* Recommended picks */}
           {analysis.recommendedPicks.length > 0 && (
             <div className="bg-dota-surface rounded-lg border border-dota-border p-3">
-              <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2">
-                Suggested Picks
-              </h4>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                  Suggested Picks
+                </h4>
+                {analysis.draftVerdict.laneVerdict.missingRoles.length > 0 && (
+                  <span className="text-[8px] font-bold text-amber-400/90">
+                    still need: {analysis.draftVerdict.laneVerdict.missingRoles.map(r => ROLE_LABEL[r]).join(', ')}
+                  </span>
+                )}
+              </div>
+              {/* Draft-position advice for the team currently picking */}
+              {isMyTurn && pickContext && (
+                <div className={[
+                  'text-[9px] font-bold mb-2 px-2 py-1 rounded border',
+                  pickContext.enemyPicksAfter === 0
+                    ? 'text-green-300 border-green-800/60 bg-green-950/30'
+                    : pickContext.enemyPicksAfter >= 3
+                      ? 'text-sky-300 border-sky-800/50 bg-sky-950/20'
+                      : 'text-gray-400 border-dota-border bg-dota-bg/40',
+                ].join(' ')}>
+                  {pickContext.enemyPicksAfter === 0
+                    ? `🔓 ${pickContext.isMyLastPick ? 'Last pick' : 'Safest pick'} — free game; commit your most counterable hero`
+                    : pickContext.isMyLastPick
+                      ? `Your last pick — commit now (${pickContext.enemyPicksAfter} enemy pick${pickContext.enemyPicksAfter === 1 ? '' : 's'} can still respond)`
+                      : pickContext.enemyPicksAfter >= 3
+                        ? `Early pick — favour safe/flexible heroes (${pickContext.enemyPicksAfter} enemy picks can still respond)`
+                        : `${pickContext.enemyPicksAfter} enemy pick${pickContext.enemyPicksAfter === 1 ? '' : 's'} can still respond to this pick`}
+                </div>
+              )}
               <div className="flex flex-col gap-2">
                 {analysis.recommendedPicks.map(rec => {
                   const hero = allHeroes.find(h => h.id === rec.heroId);
@@ -268,12 +304,18 @@ export default function AnalysisPanel({ team }: Props) {
                     <div key={rec.heroId} className="flex gap-2 items-start">
                       <HeroPortrait hero={hero} size="sm" />
                       <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 flex-wrap">
                           <span className="text-xs font-semibold text-gray-200">{hero.displayName}</span>
                           {rec.tag && (
                             <span className="text-[8px] px-1 py-0.5 rounded bg-blue-900/60 text-blue-300 font-bold">
                               {rec.tag}
                             </span>
+                          )}
+                          {rec.timing === 'commit_now' && (
+                            <span className="text-[8px] px-1 py-0.5 rounded bg-green-900/60 text-green-300 font-bold">commit now</span>
+                          )}
+                          {rec.timing === 'save_for_later' && (
+                            <span className="text-[8px] px-1 py-0.5 rounded bg-amber-900/60 text-amber-300 font-bold">save for last</span>
                           )}
                         </div>
                         {rec.reasons.slice(0, 2).map((r, i) => (

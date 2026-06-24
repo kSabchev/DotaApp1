@@ -38,6 +38,41 @@ test('inferRoles returns an empty map for no heroes', () => {
   assert.deepEqual(inferRoles([]), {});
 });
 
+// ─── flex-aware role coverage (missingRoles + rankPicks, via analyzeTeam) ───────
+
+test('missingRoles is flex-aware — a carry/mid flex pick covers mid', () => {
+  // Naively (one role per hero) both pos1 heroes count as carry → mid looks missing;
+  // the flex pick should cover it so nothing is reported missing.
+  const flexCarry: Hero = { ...mk(800, 'carry'), flexRoles: ['carry', 'mid'] };
+  const picks = [flexCarry, mk(801, 'carry'), mk(802, 'offlane'), mk(803, 'support'), mk(804, 'hard_support')];
+  const a = analyzeTeam(picks.map(h => h.id), [], [], picks, {}); // no assignments → flex applies
+  assert.ok(!a.draftVerdict.laneVerdict.missingRoles.includes('mid'), 'flex hero covers mid');
+  assert.equal(a.draftVerdict.laneVerdict.missingRoles.length, 0);
+});
+
+test('rankPicks suggests a hero that fills the open role and drops a redundant one', () => {
+  const picks = [mk(810, 'carry'), mk(811, 'mid'), mk(812, 'offlane'), mk(813, 'support')];
+  const assign: Record<number, Role> = { 810: 'carry', 811: 'mid', 812: 'offlane', 813: 'support' };
+  const hardSup = mk(820, 'hard_support');
+  const redundantCarry = mk(821, 'carry');
+  const a = analyzeTeam(picks.map(h => h.id), [], [hardSup.id, redundantCarry.id], [...picks, hardSup, redundantCarry], assign);
+  const rec = a.recommendedPicks;
+  assert.ok(rec.some(r => r.heroId === hardSup.id), 'gap-filling hard support is suggested');
+  assert.ok(!rec.some(r => r.heroId === redundantCarry.id), 'redundant carry is filtered out');
+  assert.ok(rec.find(r => r.heroId === hardSup.id)!.reasons.some(r => /open hard support/i.test(r)));
+});
+
+test('rankPicks tags a flexible pick that covers multiple open roles', () => {
+  const picks = [mk(830, 'carry'), mk(831, 'mid'), mk(832, 'offlane')];
+  const assign: Record<number, Role> = { 830: 'carry', 831: 'mid', 832: 'offlane' };
+  const flexSup: Hero = { ...mk(840, 'support'), flexRoles: ['support', 'hard_support'] };
+  const a = analyzeTeam(picks.map(h => h.id), [], [flexSup.id], [...picks, flexSup], assign);
+  const rec = a.recommendedPicks.find(r => r.heroId === flexSup.id);
+  assert.ok(rec, 'flexible support is suggested');
+  assert.equal(rec!.tag, 'flex');
+  assert.ok(rec!.reasons.some(r => /flexible/i.test(r)));
+});
+
 // ─── computeDraftHealth (via analyzeTeam) ───────────────────────────────────────
 
 const ASSIGN = (heroes: Hero[], roles: Role[]): Record<number, Role> =>

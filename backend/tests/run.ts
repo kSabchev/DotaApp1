@@ -5,6 +5,7 @@ import './matchups.test';
 import './scoring.test';
 import './draftPlanning.test';
 import './heroFreedom.test';
+import './pickTiming.test';
 import './matchupGrades.test';
 import './winModel.test';
 import './model.test';

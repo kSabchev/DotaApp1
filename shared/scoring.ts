@@ -1,15 +1,15 @@
 import type {
-  ComboCallout, DraftHealthReport, GamePlanPhase, GamePlanTimeline, HealthNote, HealthRating,
-  Hero, HeroRecommendation, LanePrediction, LaneMatchupResult, LaneVerdictResult,
-  MetaRole, PowerWindow, Role, SynergyPair, TeamAnalysis, TempoStance, UtilityTag,
-  VerdictRating, WinConditionId, WinConditionResult,
+  ComboCallout, DraftHealthReport, DraftSlot, DraftTeam, GamePlanPhase, GamePlanTimeline,
+  HealthNote, HealthRating, Hero, HeroRecommendation, LanePrediction, LaneMatchupResult,
+  LaneVerdictResult, MetaRole, PickContext, PickTiming, PowerWindow, Role, SynergyPair,
+  TeamAnalysis, TempoStance, UtilityTag, VerdictRating, WinConditionId, WinConditionResult,
 } from './types';
 import { HEROES as LOCAL_HEROES } from './heroes';
 import {
   INTERACTIONS, getCounterReasons, getLaneMatchupAdvantage,
   getLanePartnerScore, getMidMatchupNote, getSynergyPairs, getSynergyReasons,
 } from './interactions';
-import { analyzeHeroFreedom } from './heroFreedom';
+import { analyzeHeroFreedom, getHeroFragility } from './heroFreedom';
 
 export type BanThreatUrgency = 'critical' | 'high' | 'medium';
 
@@ -83,6 +83,65 @@ export function inferRoles(heroes: Hero[]): Record<number, Role> {
   }
   picks.forEach((h, i) => { result[h.id] = best!.order[i]; });
   return result;
+}
+
+// The set of positions a hero can plausibly play. A user-assigned role locks it to
+// that one; otherwise it's preferred ∪ flex ∪ metaRole — this is what lets the
+// coverage solver understand flex picks instead of pinning one role per hero.
+function roleOptions(hero: Hero, assignments: Record<number, Role>): Role[] {
+  if (assignments[hero.id]) return [assignments[hero.id]];
+  const set = new Set<Role>();
+  for (const r of hero.preferredRoles ?? []) set.add(r);
+  for (const r of hero.flexRoles ?? []) set.add(r);
+  if (hero.metaRole) set.add(META_TO_ROLE[hero.metaRole]);
+  const out = [...set].filter(r => ROLE_LIST.includes(r));
+  return out.length ? out : ['carry'];
+}
+
+// Maximum set of distinct roles the given picks can simultaneously cover, via
+// bipartite matching (Kuhn's augmenting paths). Flex picks can shift to free a
+// role, so this is the honest "which roles are actually covered" answer.
+function coveredRoles(optionSets: Role[][]): Set<Role> {
+  const roleToPick = new Map<Role, number>();
+  const augment = (p: number, seen: Set<Role>): boolean => {
+    for (const r of optionSets[p]) {
+      if (seen.has(r)) continue;
+      seen.add(r);
+      const occ = roleToPick.get(r);
+      if (occ === undefined || augment(occ, seen)) { roleToPick.set(r, p); return true; }
+    }
+    return false;
+  };
+  for (let p = 0; p < optionSets.length; p++) augment(p, new Set());
+  return new Set(roleToPick.keys());
+}
+
+// Roles no maximum assignment of the picks can cover → still need a future pick.
+function openRoles(picks: Hero[], assignments: Record<number, Role>): Role[] {
+  const covered = coveredRoles(picks.map(h => roleOptions(h, assignments)));
+  return ROLE_LIST.filter(r => !covered.has(r));
+}
+
+// Draft-position context for a team's next pick: how many picks each side still
+// makes after it. enemyPicksAfter === 0 means a "protected" slot (the team's last,
+// or last-but-one for the first-pick team) where a counterable hero gets a free game.
+export function pickContextForTeam(
+  slots: DraftSlot[], team: DraftTeam, fromIndex = 0,
+): PickContext | null {
+  let nextIdx = -1;
+  for (let i = Math.max(0, fromIndex); i < slots.length; i++) {
+    const s = slots[i];
+    if (s.phase === 'pick' && s.team === team && s.heroId === null) { nextIdx = i; break; }
+  }
+  if (nextIdx === -1) return null;  // team has no remaining picks
+
+  let enemyPicksAfter = 0, myPicksAfter = 0;
+  for (let i = nextIdx + 1; i < slots.length; i++) {
+    const s = slots[i];
+    if (s.phase !== 'pick' || s.heroId !== null) continue;
+    if (s.team === team) myPicksAfter++; else enemyPicksAfter++;
+  }
+  return { enemyPicksAfter, myPicksAfter, isMyLastPick: myPicksAfter === 0 };
 }
 
 const DESIRED_UTILITY: UtilityTag[] = [
@@ -334,10 +393,9 @@ function computeLaneVerdict(picks: Hero[], assignments: Record<number, Role>): L
     ? `${rotators.map(h => h.displayName).join(' + ')} can rotate to secure kills and deny enemy farm`
     : 'No dedicated rotation support — consider heroes with mobility or stun for ganks';
 
-  // Missing roles
-  const assignedRoles = new Set(picks.map(h => effectiveRole(h, assignments)));
-  const allRoles: Role[] = ['carry', 'mid', 'offlane', 'support', 'hard_support'];
-  const missingRoles = allRoles.filter(r => !assignedRoles.has(r));
+  // Missing roles — flex-aware: a role only counts as missing if no maximum
+  // assignment of the current picks (honouring flex) can cover it.
+  const missingRoles = openRoles(picks, assignments);
 
   const overallScore = Math.min(10,
     (carry ? 2 : 0) + (mid ? 2 : 0) + (offlaner ? 2 : 0) +
@@ -1536,6 +1594,7 @@ export function analyzeTeam(
   availableHeroIds: number[],
   heroPool: Hero[] = LOCAL_HEROES,
   roleAssignments: Record<number, Role> = {},
+  pickContext: PickContext | null = null,
 ): TeamAnalysis {
   const myPicks = myPickIds.map(id => heroPool.find(h => h.id === id)!).filter(Boolean);
   const enemyPicks = enemyPickIds.map(id => heroPool.find(h => h.id === id)!).filter(Boolean);
@@ -1611,7 +1670,7 @@ export function analyzeTeam(
     draftHealth,
     gamePlanTimeline,
     heroFreedom,
-    recommendedPicks: rankPicks(myPickIds, enemyPickIds, availableHeroIds, myPicks, missingUtility, laneVerdict, roleAssignments, heroPool),
+    recommendedPicks: rankPicks(myPickIds, enemyPickIds, availableHeroIds, myPicks, missingUtility, laneVerdict, roleAssignments, heroPool, pickContext),
     recommendedBans: rankBans(myPickIds, enemyPickIds, availableHeroIds, myPicks, primaryWinCondition, heroPool),
   };
 }
@@ -1633,15 +1692,18 @@ function rankPicks(
   myIds: number[], enemyIds: number[], availableIds: number[],
   currentPicks: Hero[], missingUtility: UtilityTag[],
   laneVerdict: LaneVerdictResult, assignments: Record<number, Role>,
-  heroPool: Hero[],
+  heroPool: Hero[], pickContext: PickContext | null = null,
 ): HeroRecommendation[] {
   const available = availableIds.map(id => heroPool.find(h => h.id === id)).filter(Boolean) as Hero[];
   const hasMid = currentPicks.some(h => effectiveRole(h, assignments) === 'mid');
   const enemyMids = enemyIds.map(id => heroPool.find(h => h.id === id)).filter(Boolean)
     .filter(h => h!.preferredRoles.includes('mid') || h!.metaRole === 'pos2') as Hero[];
 
-  // What roles are missing?
-  const coveredRoles = new Set(currentPicks.map(h => effectiveRole(h, assignments)));
+  // Flex-aware role coverage: which roles are still genuinely needed, accounting
+  // for the fact that flex picks can shift to free a slot.
+  const currentOptionSets = currentPicks.map(h => roleOptions(h, assignments));
+  const baseCovered = coveredRoles(currentOptionSets);
+  const stillOpen = ROLE_LIST.filter(r => !baseCovered.has(r));
 
   return available.map(hero => {
     let score = 0;
@@ -1683,11 +1745,25 @@ function rankPicks(
       if (hero.utilityTags.includes(tag2)) { score += 5; reasons.push(`Adds ${tag2.replace('_', ' ')}`); break; }
     }
 
-    // Fills missing role
-    const heroRole = effectiveRole(hero, {});
-    if (!coveredRoles.has(heroRole)) {
-      score += 4;
-      reasons.push(`Fills missing ${heroRole.replace('_', ' ')} slot`);
+    // Role coverage — does this pick fill a still-open role, and does it keep flex?
+    if (stillOpen.length > 0) {
+      const candOptions = roleOptions(hero, {});
+      const withCand = coveredRoles([...currentOptionSets, candOptions]);
+      const fillsGap = withCand.size > baseCovered.size;
+      const openFillable = candOptions.filter(r => stillOpen.includes(r));
+      if (fillsGap) {
+        const filled = openFillable[0] ?? [...withCand].find(r => !baseCovered.has(r));
+        score += 8;
+        if (filled) reasons.push(`Fills the open ${filled.replace('_', ' ')} slot`);
+        if (openFillable.length >= 2) {
+          score += 3;
+          tag = tag ?? 'flex';
+          reasons.push(`Flexible — can cover ${openFillable.map(r => r.replace('_', ' ')).join(' or ')}`);
+        }
+      } else {
+        // Team still needs roles but this hero structurally fills none — deprioritise.
+        score -= 4;
+      }
     }
 
     // Safe lane needs
@@ -1698,7 +1774,32 @@ function rankPicks(
       tag = 'safe lane';
     }
 
-    return { heroId: hero.id, score, reasons: [...new Set(reasons)].slice(0, 3), tag };
+    // Draft-position timing — counterable heroes want a protected (late) slot.
+    let timing: PickTiming | undefined;
+    if (pickContext) {
+      const frag = getHeroFragility(hero);
+      if (pickContext.enemyPicksAfter === 0) {
+        // Protected slot: the enemy can no longer respond — commit counterable heroes here.
+        if (frag === 'fragile') {
+          score += 6; timing = 'commit_now';
+          reasons.push('Free game — pick here; the enemy can no longer draft a counter');
+        } else timing = 'safe_now';
+      } else if (pickContext.isMyLastPick) {
+        // Your final pick — you must commit it; there's no later slot to save for.
+        timing = 'commit_now';
+        if (frag === 'fragile') {
+          reasons.push(`Your last pick — commit it (${pickContext.enemyPicksAfter} enemy pick${pickContext.enemyPicksAfter === 1 ? '' : 's'} can still respond)`);
+        }
+      } else if (frag === 'fragile') {
+        score -= 4; timing = 'save_for_later';
+        reasons.push("Counterable — risky now; save for a later pick when the enemy can't respond");
+      } else if (frag === 'resilient') {
+        score += 2; timing = 'safe_now';
+        reasons.push('Resilient — safe to commit early');
+      } else timing = 'safe_now';
+    }
+
+    return { heroId: hero.id, score, reasons: [...new Set(reasons)].slice(0, 3), tag, timing };
   })
     .filter(r => r.score > 0)
     .sort((a, b) => b.score - a.score)
