@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { ITEMS, ITEM_BY_ID, itemsProviding, itemIconUrl } from '../../shared/items';
 import { MECHANIC_LABEL, MECHANIC_COUNTERS, RELIANCE_ANSWERS } from '../../shared/mechanics';
 import { HERO_MECHANICS } from '../../shared/heroMechanics';
+import { INTERACTIONS, HERO_IDS } from '../../shared/interactions';
 
 const MECHANICS = new Set(Object.keys(MECHANIC_LABEL));
 const RELIANCES = new Set(Object.keys(RELIANCE_ANSWERS));
@@ -55,4 +56,17 @@ test('roster coverage is substantial (>100 heroes tagged)', () => {
 test('item id map and icon url helper work', () => {
   assert.equal(ITEM_BY_ID.get('black_king_bar')?.name, 'Black King Bar');
   assert.match(itemIconUrl('pipe'), /items\/pipe\.png$/);
+});
+
+test('every interaction resolves to valid hero ids (no unknown short-names, no self-refs)', () => {
+  // The name→id resolver throws at module load on an unknown short-name, so merely
+  // importing INTERACTIONS already guards against typos. These assertions make that
+  // guarantee explicit and also catch self-referential entries.
+  const validIds = new Set(Object.values(HERO_IDS));
+  assert.ok(INTERACTIONS.length > 200, 'expected a substantial interaction table');
+  for (const ix of INTERACTIONS) {
+    assert.ok(validIds.has(ix.heroId), `interaction heroId ${ix.heroId} not in HERO_IDS`);
+    assert.ok(validIds.has(ix.targetHeroId), `interaction targetHeroId ${ix.targetHeroId} not in HERO_IDS`);
+    assert.notEqual(ix.heroId, ix.targetHeroId, `self-referential interaction: ${ix.reason}`);
+  }
 });

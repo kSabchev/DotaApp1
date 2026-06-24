@@ -9,6 +9,7 @@ import {
   INTERACTIONS, getCounterReasons, getLaneMatchupAdvantage,
   getLanePartnerScore, getMidMatchupNote, getSynergyPairs, getSynergyReasons,
 } from './interactions';
+import { analyzeHeroFreedom } from './heroFreedom';
 
 export type BanThreatUrgency = 'critical' | 'high' | 'medium';
 
@@ -1283,7 +1284,9 @@ function computeDraftHealth(
   }
 
   // ── Farm balance ──────────────────────────────────────────────────────────────
-  const coreCount = [carry, mid, offlaner].filter(Boolean).length;
+  // Count heroes in core roles (not just filled slots) so greedy core-heavy drafts
+  // (e.g. two carries) are detected.
+  const coreCount = byRole('carry').length + byRole('mid').length + byRole('offlane').length;
   const supCount = supports.length;
   let farmRating: HealthRating;
   let farmDetail: string;
@@ -1597,6 +1600,7 @@ export function analyzeTeam(
   const gamePlanTimeline = buildGamePlanTimeline(
     myPicks, enemyPicks, primaryWinCondition, powerWindow, draftHealth, roleAssignments,
   );
+  const heroFreedom = analyzeHeroFreedom(myPicks, enemyPicks);
 
   return {
     totalScore, synergyScore, counterScore, laneScore, roleBalanceScore,
@@ -1606,6 +1610,7 @@ export function analyzeTeam(
     draftVerdict,
     draftHealth,
     gamePlanTimeline,
+    heroFreedom,
     recommendedPicks: rankPicks(myPickIds, enemyPickIds, availableHeroIds, myPicks, missingUtility, laneVerdict, roleAssignments, heroPool),
     recommendedBans: rankBans(myPickIds, enemyPickIds, availableHeroIds, myPicks, primaryWinCondition, heroPool),
   };

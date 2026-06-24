@@ -869,14 +869,6 @@ export const HERO_METADATA: Record<string, Partial<Hero>> = {
     needs: ['setup stuns', 'front-line protection'],
   },
   // Wraith King (skeleton_king above), Zeus (zuus above)
-  invoker_qw: {
-    preferredRoles: ['mid'],
-    strengths: ['Strong ganker build', 'Tornado + Meteor combo', 'Versatile utility', 'Hard to predict'],
-    weaknesses: ['Mechanically demanding', 'Weaker teamfight vs Exort'],
-    powerSpikes: ['Level 6', 'Aghanim\'s Scepter', 'Level 20'],
-    utilityTags: ['burst', 'stun', 'mobility', 'wave_clear'],
-    needs: ['early support', 'vision'],
-  },
   io: {
     preferredRoles: ['hard_support'],
     strengths: ['Global relocate', 'Strong heal with Overcharge', 'Tether movement speed', 'Saves allies globally'],
@@ -930,7 +922,7 @@ export const META_ROLE_MAP: Record<string, MetaRole> = {
   monkey_king: 'pos4', marci: 'pos4', techies: 'pos4',
   shadow_shaman: 'pos4', ogre_magi: 'pos4', windrunner: 'pos4',
   disruptor: 'pos4', mirana: 'pos4', tiny: 'pos4',
-  invoker_qw: 'pos4', silencer: 'pos4', snapfire: 'pos4',
+  silencer: 'pos4', snapfire: 'pos4',
   grimstroke: 'pos4',
 
   // Pos 5 – hard support

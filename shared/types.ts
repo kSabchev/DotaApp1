@@ -179,6 +179,29 @@ export interface GamePlanTimeline {
   winBy: string | null;   // e.g. "Close the game by 35 min" — null if this is a late-game lineup
 }
 
+// ─── Hero freedom ("free game" vs. disrupted by counters) ─────────────────────
+
+// How badly a hero's game collapses when its counters are on the board.
+export type Fragility = 'resilient' | 'normal' | 'fragile';
+
+// How free a picked hero is to play their game given the enemy draft.
+export type FreedomStatus = 'free' | 'minor' | 'contested' | 'shut_down';
+
+export interface HeroCounter {
+  enemyId: number;
+  enemyName: string;
+  reason: string;
+  severity: number;   // 0–10, before fragility weighting
+}
+
+export interface HeroFreedom {
+  heroId: number;
+  status: FreedomStatus;
+  fragility: Fragility;
+  counters: HeroCounter[];   // strongest first, capped
+  note: string;
+}
+
 // ─── Hero types ──────────────────────────────────────────────────────────────
 
 export interface Hero {
@@ -268,6 +291,7 @@ export interface TeamAnalysis {
   draftVerdict: DraftVerdict;
   draftHealth: DraftHealthReport;
   gamePlanTimeline: GamePlanTimeline;
+  heroFreedom: HeroFreedom[];
 
   // Recommendations
   recommendedPicks: HeroRecommendation[];

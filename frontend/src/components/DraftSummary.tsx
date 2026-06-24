@@ -16,6 +16,7 @@ import MatchupGradesPanel from './MatchupGradesPanel';
 import HeroBuildPanel from './HeroBuildPanel';
 import DraftHealthPanel from './DraftHealthPanel';
 import GamePlanTimelinePanel from './GamePlanTimelinePanel';
+import HeroFreedomPanel from './HeroFreedomPanel';
 import RolePicker from './RolePicker';
 
 export default function DraftSummary() {
@@ -191,6 +192,9 @@ export default function DraftSummary() {
 
               {/* Minute-by-minute execution plan */}
               <GamePlanTimelinePanel timeline={analysis.gamePlanTimeline} />
+
+              {/* Free game check — who plays freely vs. is disrupted */}
+              <HeroFreedomPanel freedom={analysis.heroFreedom} heroes={myHeroes} />
 
               {/* Rotations & draft health */}
               <DraftHealthPanel health={analysis.draftHealth} team={team} />

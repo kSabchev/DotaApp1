@@ -114,7 +114,7 @@ export default function DraftImport({ onClose }: Props) {
             value={matchId}
             onChange={e => setMatchId(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && fetchMatch()}
-            placeholder="e.g. 7916872537"
+            placeholder="e.g. 8863619325"
             className="flex-1 bg-dota-bg border border-dota-border rounded px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-dota-accent"
           />
           <button

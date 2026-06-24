@@ -362,16 +362,6 @@ export const HEROES: Hero[] = [
     needs: ['AoE damage follow-up', 'Chrono / Black Hole / Ravage combo'],
   },
   {
-    id: 37, name: 'invoker_qw', displayName: 'Invoker (QW)',
-    attribute: 'intelligence', attack: 'ranged', complexity: 3,
-    roles: ['mid'], preferredRoles: ['mid'],
-    strengths: ['Strong ganker build', 'Tornado + Meteor combo', 'Versatile utility', 'Hard to predict'],
-    weaknesses: ['Mechanically demanding', 'Weaker teamfight vs Exort build'],
-    powerSpikes: ['Level 6', 'Aghanim\'s Scepter', 'Level 20'],
-    utilityTags: ['burst', 'stun', 'mobility', 'wave_clear'],
-    needs: ['early support', 'vision'],
-  },
-  {
     id: 91, name: 'io', displayName: 'Io',
     attribute: 'universal', attack: 'ranged', complexity: 3,
     roles: ['hard_support'], preferredRoles: ['hard_support'],

@@ -229,6 +229,28 @@ The matcher tests double as living documentation of the counter-item rules
 - **Two-team role awareness** — lane predictions and the game-plan timeline now honour the enemy's assigned roles too (both read the global `roleAssignments` map), so editing either team's positions updates the matchups
 - **Hero-ID data fix** — `shared/interactions.ts` + `shared/heroes.ts` were re-keyed from a legacy custom hero-ID scheme to real OpenDota IDs, so synergy/counter/combo/ban lookups resolve to the correct heroes (e.g. Chronosphere combos now belong to Faceless Void, not Tidehunter). Every `heroId` block was audited against its reason text. *Note: this corrected the displayed analysis but did not move the heuristic backtest AUC — that limitation is structural to the scoring, not the IDs.*
 
+### Session 13 — Data hardening
+- **Interactions re-keyed by name** — `shared/interactions.ts` now authors every entry as readable short-names (`{ hero: 'faceless_void', target: 'earthshaker', … }`) resolved to OpenDota IDs at load via a canonical `HERO_IDS` table. An unknown name throws on import, so the silent ID-mismatch bug class can no longer recur, and the table is human-auditable. Downstream consumers are unchanged (runtime `INTERACTIONS` still carry numeric `heroId`/`targetHeroId`).
+- **Partner-ID audit** — confirmed the only hero appearing solely as a combo *partner* (Morphling) is referenced correctly; combined with the re-key this closes the wrong-ID class on both sides.
+- **Stale comments** stripped (block comments no longer cite dead custom IDs)
+- **Dead `Invoker (QW)`** placeholder hero removed from `heroes.ts` / `heroMetadata.ts` (it shadowed Warlock's real ID 37 in the local fallback pool)
+- **Import dialog** example match ID updated to a live one
+- New `data.test.ts` case asserts every interaction resolves to a valid hero ID with no self-references
+
+### Session 14 — Coaching-layer tests
+- `draftPlanning.test.ts` covers the role/coaching functions in `shared/scoring.ts`: `inferRoles` (1:1 assignment, no duplicate roles, empty input), `computeDraftHealth` (farm-balance ratings, blink-breakers, combo callouts — via `analyzeTeam().draftHealth`), and `buildGamePlanTimeline` (four ordered phases, exactly one peak, `winBy` deadlines — via `analyzeTeam().gamePlanTimeline`)
+- **Bug found & fixed by the tests:** `computeDraftHealth` derived `coreCount` from the three *filled core slots* (max 3), so the "4 farm-dependent heroes" farm-balance warning and the flex-warning were dead code. It now counts core *heroes*, so greedy core-heavy drafts (e.g. two carries) are flagged. (42 tests total)
+
+### Session 15 — Free Game Check (counter-sensitivity)
+First slice of the "draft brain" direction: which picked heroes get a **free game** vs. are **disrupted** by the enemy draft, weighted by how badly a given hero minds counters.
+- `shared/heroFreedom.ts` — `analyzeHeroFreedom(myPicks, enemyPicks)` → per-hero `{ status, fragility, counters[], note }`. Counter signal is **hybrid**:
+  1. hand-curated hero↔hero counters (`interactions.ts` `getCounter` — score + reason)
+  2. **mechanic-based** — the hero's `reliance`/`vulnerable` (`heroMechanics.ts`) answered by an enemy whose kit natively provides that mechanic (`MECHANIC_PROVIDERS`), e.g. Bounty Hunter's detection vs Riki's invisibility
+- **Fragility** (`resilient` / `normal` / `fragile`) scales severity — a fragile hero is shut down by a counter a resilient one plays through. Hand overrides (`HERO_FRAGILITY`, ~30 heroes) take priority; otherwise derived from the mechanic profile (resilient is hand-only since tankiness/flex isn't in the profile).
+- Status tiers: `free` / `minor` / `contested` / `shut_down`, each with a hero-specific coaching note.
+- `HeroFreedomPanel.tsx` renders it per team in `DraftSummary` (portrait + status badge + fragility chip + the disrupting enemies).
+- `heroFreedom.test.ts` — fragility (hand + derived), free game, curated counter, mechanic counter, fragility-scaling (48 tests total).
+
 ---
 
 ## File Map
@@ -249,6 +271,7 @@ frontend/src/
 │   ├── DraftVerdictCard.tsx     # Win condition + coach narrative + gameplan
 │   ├── GamePlanTimelinePanel.tsx # Minute-by-minute execution timeline (4 phases)
 │   ├── HeroBuildPanel.tsx       # Per-hero item build with edit/remove/add/reorder
+│   ├── HeroFreedomPanel.tsx     # Free Game Check — free vs. disrupted per hero
 │   ├── HeroGrid.tsx             # Hero picker grid with filters
 │   ├── HeroPortrait.tsx         # Portrait with attr pip + meta tier badge
 │   ├── ItemTablePanel.tsx       # Counter-Item Reference modal (searchable)
@@ -277,6 +300,7 @@ frontend/src/
     └── scoring.ts               # analyzeTeam(), rankBanThreats(), win conditions
 
 shared/                          # Framework-free TS — used by both frontend and backend
+├── heroFreedom.ts               # analyzeHeroFreedom() + fragility (free game vs. counters)
 ├── heroMechanics.ts             # 127-hero mechanic profiles (reliance/vulnerable)
 ├── heroMetadata.ts              # Metadata for all heroes (roles, metaRole, utilityTags)
 ├── heroPool.ts                  # Builds Hero objects from OpenDota raw + local metadata
