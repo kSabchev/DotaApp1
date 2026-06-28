@@ -24,6 +24,8 @@ interface Props {
   onClick?: () => void;
   team?: 'radiant' | 'dire';
   showName?: boolean;
+  // Inline draft annotation (recommended pick / ban threat) drawn on the portrait.
+  annotation?: { ring?: string; badge?: string; badgeCls?: string };
 }
 
 const SIZE_BOX = { sm: 'w-14 h-10', md: 'w-20 h-14', lg: 'w-24 h-16' };
@@ -31,18 +33,18 @@ const SIZE_FALLBACK = { sm: 'text-xs', md: 'text-sm', lg: 'text-base' };
 
 export default function HeroPortrait({
   hero, size = 'md', disabled = false, selected = false,
-  onClick, team, showName = false,
+  onClick, team, showName = false, annotation,
 }: Props) {
   const [imgFailed, setImgFailed] = useState(false);
   const meta = getHeroMeta(hero.id);
   const tierLabel = meta ? TIER_LABEL[meta.tier] : '';
   const tierColor = meta ? TIER_COLOR[meta.tier] : '';
 
-  const ringClass = selected
+  const ringClass = annotation?.ring ?? (selected
     ? team === 'radiant' ? 'ring-2 ring-green-500'
       : team === 'dire' ? 'ring-2 ring-red-500'
       : 'ring-2 ring-dota-accent'
-    : '';
+    : '');
 
   return (
     <button
@@ -97,6 +99,15 @@ export default function HeroPortrait({
             tierColor,
           ].join(' ')}>
             {tierLabel}
+          </span>
+        )}
+        {/* Draft annotation badge (recommended / threat) */}
+        {annotation?.badge && (
+          <span className={[
+            'absolute bottom-0.5 right-0.5 text-[7px] font-black px-0.5 rounded-sm leading-tight',
+            annotation.badgeCls ?? 'bg-black/70 text-white',
+          ].join(' ')}>
+            {annotation.badge}
           </span>
         )}
       </div>

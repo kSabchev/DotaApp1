@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Hero, Role } from '../types';
 import { computeItemMatchups } from '../../../shared/matchups';
 
@@ -17,6 +17,7 @@ const ROLE_COLOR: Record<Role, string> = {
 };
 
 export default function MatchupItemPanel({ myPicks, enemyPicks }: Props) {
+  const [open, setOpen] = useState(true);
   const { recommended } = useMemo(
     () => computeItemMatchups(myPicks, enemyPicks),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -26,11 +27,15 @@ export default function MatchupItemPanel({ myPicks, enemyPicks }: Props) {
   if (enemyPicks.length === 0 || recommended.length === 0) return null;
 
   return (
-    <div className="bg-dota-surface rounded-lg border border-dota-border p-3">
-      <h4 className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 mb-2">
-        Items to Build vs Enemy
-      </h4>
-      <div className="flex flex-col gap-2">
+    <div className="bg-dota-surface rounded-lg border border-dota-border">
+      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-3 py-2 hover:bg-dota-hover/30 rounded-lg transition-colors">
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">
+          Items to Build vs Enemy
+        </h4>
+        <span className="text-gray-600 text-[10px]">{open ? '▾' : '▸'}</span>
+      </button>
+      {open && (
+      <div className="flex flex-col gap-2 px-3 pb-3">
         {recommended.slice(0, 7).map(rec => (
           <div key={rec.itemId} className="flex gap-2 items-start">
             <img
@@ -57,6 +62,7 @@ export default function MatchupItemPanel({ myPicks, enemyPicks }: Props) {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { DraftVerdict, VerdictRating } from '../types';
 
 interface Props {
@@ -40,21 +41,27 @@ function StrengthBar({ value, max = 10, peak = false }: { value: number; max?: n
 }
 
 export default function DraftVerdictCard({ verdict }: Props) {
+  const [open, setOpen] = useState(true);
   const style = RATING_STYLES[verdict.rating];
   const pw = verdict.powerWindow;
   const peakLabel = pw.peak.charAt(0).toUpperCase() + pw.peak.slice(0);
 
   return (
-    <div className={['rounded-lg border p-3 flex flex-col gap-3', style.border, style.bg].join(' ')}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className={['rounded-lg border flex flex-col', style.border, style.bg].join(' ')}>
+      {/* Header (collapse toggle) */}
+      <button onClick={() => setOpen(o => !o)} className="flex items-center justify-between px-3 py-2 hover:bg-black/10 rounded-lg transition-colors">
         <span className={['text-[10px] font-bold uppercase tracking-wider', style.text].join(' ')}>
           Draft Verdict
         </span>
-        <span className={['text-[10px] px-2 py-0.5 rounded font-bold', style.badge].join(' ')}>
-          {verdict.ratingLabel}
+        <span className="flex items-center gap-2">
+          <span className={['text-[10px] px-2 py-0.5 rounded font-bold', style.badge].join(' ')}>
+            {verdict.ratingLabel}
+          </span>
+          <span className="text-gray-500 text-[10px]">{open ? '▾' : '▸'}</span>
         </span>
-      </div>
+      </button>
+      {open && (
+      <div className="flex flex-col gap-3 px-3 pb-3">
 
       {/* Primary Win Condition */}
       <div>
@@ -228,6 +235,8 @@ export default function DraftVerdictCard({ verdict }: Props) {
             ))}
           </ul>
         </div>
+      )}
+      </div>
       )}
     </div>
   );

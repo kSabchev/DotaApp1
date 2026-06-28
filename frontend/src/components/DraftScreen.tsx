@@ -2,10 +2,11 @@ import { useState, useMemo } from 'react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectDraft, selectRadiantPicks, selectDirePicks, selectAvailableHeroes, selectAllHeroes } from '../store/selectors';
 import { undoLastPick, resetDraft, setMode, setBansEnabled, setStartingTeam } from '../store/draftSlice';
-import { analyzeTeam } from '../utils/scoring';
+import { analyzeTeam, pickContextForTeam, rankBanThreats, type BanThreat } from '../utils/scoring';
 import TeamPanel from './TeamPanel';
 import BanPanel from './BanPanel';
-import HeroGrid from './HeroGrid';
+import HeroGrid, { type GridAnnotation } from './HeroGrid';
+import TurnCard from './TurnCard';
 import AnalysisPanel from './AnalysisPanel';
 import ComparisonPanel from './ComparisonPanel';
 import DraftRoleBoard from './DraftRoleBoard';
@@ -32,16 +33,53 @@ export default function DraftScreen() {
   const roleAssignments = useAppSelector(s => s.draft.roleAssignments) as Record<number, Role>;
   const availableIds = availableHeroes.map(h => h.id);
 
+  // Draft-position context per team (drives timing-aware suggestions + turn card).
+  const radiantCtx = useMemo(() => pickContextForTeam(slots, 'radiant', currentSlotIndex), [slots, currentSlotIndex]);
+  const direCtx = useMemo(() => pickContextForTeam(slots, 'dire', currentSlotIndex), [slots, currentSlotIndex]);
+
   const radiantAnalysis = useMemo(
-    () => analyzeTeam(radiantPicks, direPicks, availableIds, allHeroes, roleAssignments),
+    () => analyzeTeam(radiantPicks, direPicks, availableIds, allHeroes, roleAssignments, radiantCtx),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [radiantPicks.join(','), direPicks.join(','), availableIds.join(','), allHeroes.length, JSON.stringify(roleAssignments)],
+    [radiantPicks.join(','), direPicks.join(','), availableIds.join(','), allHeroes.length, JSON.stringify(roleAssignments), JSON.stringify(radiantCtx)],
   );
   const direAnalysis = useMemo(
-    () => analyzeTeam(direPicks, radiantPicks, availableIds, allHeroes, roleAssignments),
+    () => analyzeTeam(direPicks, radiantPicks, availableIds, allHeroes, roleAssignments, direCtx),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [direPicks.join(','), radiantPicks.join(','), availableIds.join(','), allHeroes.length, JSON.stringify(roleAssignments)],
+    [direPicks.join(','), radiantPicks.join(','), availableIds.join(','), allHeroes.length, JSON.stringify(roleAssignments), JSON.stringify(direCtx)],
   );
+
+  // Active turn → grid annotations + the single "next action" card.
+  const currentSlot = slots[currentSlotIndex];
+  const activeAnalysis = currentSlot?.team === 'dire' ? direAnalysis : radiantAnalysis;
+  const activeCtx = currentSlot?.team === 'dire' ? direCtx : radiantCtx;
+
+  // Ban slots use the richer threat ranking (same source as the Threats panel).
+  const banThreats = useMemo<BanThreat[]>(() => {
+    if (phase !== 'drafting' || currentSlot?.phase !== 'ban') return [];
+    const my = currentSlot.team === 'radiant' ? radiantPicks : direPicks;
+    const enemy = currentSlot.team === 'radiant' ? direPicks : radiantPicks;
+    return rankBanThreats(my, enemy, availableIds, allHeroes, activeAnalysis.draftVerdict.primaryWinCondition);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, currentSlotIndex, radiantPicks.join(','), direPicks.join(','), availableIds.join(','), allHeroes.length]);
+
+  const gridAnnotations = useMemo(() => {
+    const map = new Map<number, GridAnnotation>();
+    if (phase !== 'drafting' || !currentSlot) return map;
+    if (currentSlot.phase === 'pick') {
+      activeAnalysis.recommendedPicks.forEach((r, i) => map.set(r.heroId, { kind: 'recommend', rank: i + 1, timing: r.timing }));
+    } else {
+      banThreats.forEach((t, i) => map.set(t.heroId, { kind: 'threat', rank: i + 1 }));
+    }
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, currentSlotIndex, activeAnalysis, banThreats]);
+
+  // The grid highlights every suggestion; the card just announces the turn + count.
+  const turn = useMemo(() => {
+    if (phase !== 'drafting' || !currentSlot || gridAnnotations.size === 0) return null;
+    return { action: currentSlot.phase as 'ban' | 'pick', team: currentSlot.team, count: gridAnnotations.size };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, currentSlotIndex, gridAnnotations]);
 
   const radiantPickIndices = slots
     .map((s, i) => ({ s, i }))
@@ -179,11 +217,20 @@ export default function DraftScreen() {
 
           {/* Center: Bans + Hero Grid + Live Comparison */}
           <div className="flex-1 flex flex-col gap-2 p-3 overflow-hidden">
+            {/* Single "next action" turn card */}
+            {turn && (
+              <TurnCard
+                action={turn.action}
+                team={turn.team}
+                count={turn.count}
+                pickContext={activeCtx}
+              />
+            )}
             {(mode === 'captains' || bansEnabled) && (
               <BanPanel slots={slots} currentSlotIndex={currentSlotIndex} />
             )}
             <div className="flex-1 overflow-hidden">
-              <HeroGrid />
+              <HeroGrid annotations={gridAnnotations} />
             </div>
             {(radiantPicks.length > 0 || direPicks.length > 0) && (
               <div className="shrink-0 border-t border-dota-border pt-2 flex flex-col gap-2 overflow-y-auto scrollbar-thin">

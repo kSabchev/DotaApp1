@@ -28,6 +28,7 @@ function GradeBar({ s }: { s: ScaleSummary }) {
 }
 
 export default function MatchupGradesPanel({ myPicks, enemyPicks }: Props) {
+  const [open, setOpen] = useState(true);
   // Prime live win-rate data for both teams; bump state so grades refine once loaded.
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -52,11 +53,15 @@ export default function MatchupGradesPanel({ myPicks, enemyPicks }: Props) {
   const scales = [grades.synergy, grades.lanePartner, grades.laneMatchup, grades.gameMatchup];
 
   return (
-    <div className="bg-dota-surface rounded-lg border border-dota-border p-3 flex flex-col gap-2.5">
-      <h4 className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">
-        Matchup Grades
-      </h4>
-
+    <div className="bg-dota-surface rounded-lg border border-dota-border">
+      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-3 py-2 hover:bg-dota-hover/30 rounded-lg transition-colors">
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+          Matchup Grades
+        </h4>
+        <span className="text-gray-600 text-[10px]">{open ? '▾' : '▸'}</span>
+      </button>
+      {open && (
+      <div className="px-3 pb-3 flex flex-col gap-2.5">
       <div className="flex flex-col gap-1.5">
         {scales.map(s => <GradeBar key={s.key} s={s} />)}
       </div>
@@ -82,6 +87,8 @@ export default function MatchupGradesPanel({ myPicks, enemyPicks }: Props) {
             })}
           </div>
         </div>
+      )}
+      </div>
       )}
     </div>
   );

@@ -267,6 +267,16 @@ Final slice of the "draft brain": *when* to commit a hero, based on how countera
 - 7 new tests in `pickTiming.test.ts` (slot counting, save-for-later, commit-now on protected/last-pick slots, no-context) — 58 tests total.
 - *Known minor gap:* the timing note is hidden on a team's very first pick (the analysis block requires ≥1 pick); it shows from the second pick onward.
 
+### Session 18 — Turn card + inline grid annotations
+Tightens the moment-to-moment drafting loop so the assistant reads like a coach.
+- **`TurnCard`** — a compact "your turn" banner above the hero grid: `PICK`/`BAN`, whose turn, a count ("5 suggested picks highlighted below" / "top ban threats highlighted below"), and the draft-position cue. It deliberately does *not* feature one hero — the grid highlights them all.
+- **Inline grid annotations** — `HeroGrid` draws rings + corner badges on recommended/threat heroes: gold ranked rings (1–5) on suggested picks (green "now" / amber "save" badges when timing applies), red ⊘ rings on the top ban threats. `HeroPortrait` gained an optional `annotation` prop.
+- `DraftScreen` threads each team's `pickContext` into its analysis (timing-aware suggestions everywhere), derives the active-turn annotation map (picks from `recommendedPicks`, bans from the richer `rankBanThreats`), and renders the card.
+
+### Session 19 — Collapsible, reordered side panel
+- **Collapsible sections** — Threats to Ban, Draft Verdict, Items to Build vs Enemy, Matchup Grades, Lane Predictions, Team Profile, Suggested Picks, and Suggested Bans now collapse/expand via a clickable header + chevron. A generic `Section` wrapper handles the five inline sections; the three standalone components (`DraftVerdictCard`, `MatchupItemPanel`, `MatchupGradesPanel`) got their own internal collapse so they keep their styling (e.g. the verdict's rating-colored border).
+- **Action-aware ordering** — `AnalysisPanel` now renders sections from a keyed map in an order driven by the team's *next move*: on a **pick** turn Suggested Picks leads; on a **ban** turn Suggested Bans + Threats to Ban lead. Everything else keeps its prior relative order.
+
 ---
 
 ## File Map

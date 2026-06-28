@@ -3,7 +3,16 @@ import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectUsedHeroIds, selectAllHeroes } from '../store/selectors';
 import { selectHero } from '../store/draftSlice';
 import HeroPortrait from './HeroPortrait';
-import type { Attribute, Role } from '../types';
+import type { Attribute, Role, PickTiming } from '../types';
+
+export interface GridAnnotation { kind: 'recommend' | 'threat'; rank: number; timing?: PickTiming }
+
+function portraitAnno(a: GridAnnotation) {
+  if (a.kind === 'threat') return { ring: 'ring-2 ring-red-500/80', badge: '⊘', badgeCls: 'bg-red-700 text-white' };
+  if (a.timing === 'commit_now') return { ring: 'ring-2 ring-green-500', badge: 'now', badgeCls: 'bg-green-600 text-white' };
+  if (a.timing === 'save_for_later') return { ring: 'ring-2 ring-amber-400', badge: 'save', badgeCls: 'bg-amber-600 text-black' };
+  return { ring: 'ring-2 ring-amber-400', badge: String(a.rank), badgeCls: 'bg-amber-500 text-black' };
+}
 
 const ATTRIBUTES: { label: string; value: Attribute | 'all' }[] = [
   { label: 'All', value: 'all' },
@@ -22,7 +31,7 @@ const ROLES: { label: string; value: Role | 'all' }[] = [
   { label: 'Hard Sup', value: 'hard_support' },
 ];
 
-export default function HeroGrid() {
+export default function HeroGrid({ annotations }: { annotations?: Map<number, GridAnnotation> }) {
   const dispatch = useAppDispatch();
   const usedIds = useAppSelector(selectUsedHeroIds);
   const allHeroes = useAppSelector(selectAllHeroes);
@@ -105,21 +114,24 @@ export default function HeroGrid() {
       {/* Hero grid */}
       <div className="overflow-y-auto scrollbar-thin flex-1">
         <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-9 lg:grid-cols-10 xl:grid-cols-11 gap-1 pb-2">
-          {filtered.map(hero => (
-            <div key={hero.id} className="flex flex-col items-center gap-0.5">
-              <HeroPortrait
-                hero={hero}
-                size="sm"
-                disabled={usedIds.includes(hero.id) || phase === 'complete'}
-                showName
-                onClick={() => {
-                  if (!usedIds.includes(hero.id) && phase !== 'complete') {
-                    dispatch(selectHero(hero.id));
-                  }
-                }}
-              />
-            </div>
-          ))}
+          {filtered.map(hero => {
+            const used = usedIds.includes(hero.id) || phase === 'complete';
+            const anno = !used ? annotations?.get(hero.id) : undefined;
+            return (
+              <div key={hero.id} className="flex flex-col items-center gap-0.5">
+                <HeroPortrait
+                  hero={hero}
+                  size="sm"
+                  disabled={used}
+                  showName
+                  annotation={anno ? portraitAnno(anno) : undefined}
+                  onClick={() => {
+                    if (!used) dispatch(selectHero(hero.id));
+                  }}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
