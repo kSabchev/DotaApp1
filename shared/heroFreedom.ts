@@ -5,10 +5,11 @@
 // Counter signal is hybrid:
 //   1. hand-curated hero↔hero counters (interactions.ts counterScore + reason)
 //   2. mechanic-based — the hero's reliance/vulnerable (heroMechanics.ts) answered
-//      by an enemy whose KIT natively provides that mechanic (MECHANIC_PROVIDERS)
+//      by an enemy whose KIT provides that mechanic (MECHANIC_PROVIDERS hand map
+//      ∪ disruption mechanics inferred from the enemy's utilityTags)
 // Severity is then weighted by the hero's FRAGILITY (hand tag, else derived from
 // its mechanic profile), which is what captures "this hero just can't play into it".
-import type { Hero, Fragility, FreedomStatus, HeroCounter, HeroFreedom } from './types';
+import type { Hero, Fragility, FreedomStatus, HeroCounter, HeroFreedom, UtilityTag } from './types';
 import type { Mechanic, Reliance } from './mechanics';
 import { RELIANCE_ANSWERS, mechanicReason } from './mechanics';
 import { HERO_MECHANICS } from './heroMechanics';
@@ -43,6 +44,24 @@ export const MECHANIC_PROVIDERS: Record<string, Mechanic[]> = {
   shadow_shaman: ['hard_control'],
   viper: ['break'],
 };
+
+// Disruption mechanics inferable from a hero's utilityTags — broadens recall beyond
+// the hand map above. Only tags that map to a RELIABLE counter mechanic; 'stun' is
+// deliberately excluded (too common — a brief stun isn't a defining counter).
+const TAG_MECHANIC: Partial<Record<UtilityTag, Mechanic>> = {
+  silence: 'silence',
+  lockdown: 'hard_control',
+  dispel: 'dispel',
+};
+
+// Every disruption mechanic an enemy provides: hand-curated kit ∪ tag-inferred.
+// The vulnerability gate in analyzeHeroFreedom keeps this precise — a provider only
+// counts if the picked hero is actually vulnerable to that mechanic.
+function enemyProvides(enemy: Hero): Mechanic[] {
+  const out = new Set<Mechanic>(MECHANIC_PROVIDERS[enemy.name] ?? []);
+  for (const t of enemy.utilityTags) { const m = TAG_MECHANIC[t]; if (m) out.add(m); }
+  return [...out];
+}
 
 const RELIANCE_WEIGHT: Record<Reliance, number> = {
   channel: 2, invisibility: 1.6, single_target_spell: 1.4, regen: 1.3,
@@ -122,8 +141,8 @@ export function analyzeHeroFreedom(myPicks: Hero[], enemyPicks: Hero[]): HeroFre
     const answers = answeringMechanics(hero.name);
     if (answers.size > 0) {
       for (const enemy of enemyPicks) {
-        const provided = MECHANIC_PROVIDERS[enemy.name];
-        if (!provided) continue;
+        const provided = enemyProvides(enemy);
+        if (provided.length === 0) continue;
         const hit = provided.find(m => answers.has(m));
         if (!hit) continue;
         const existing = byEnemy.get(enemy.id);

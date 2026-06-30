@@ -1,3 +1,5 @@
+import { API_BASE as BACKEND } from '../config';
+
 export type MetaTier = 'S' | 'contested' | 'strong' | 'niche' | 'normal';
 
 export interface HeroMeta {
@@ -70,7 +72,7 @@ export async function loadMeta(): Promise<void> {
   loading = true;
 
   try {
-    const res = await fetch('/api/heroes/stats');
+    const res = await fetch(`${BACKEND}/heroes/stats`, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) return;
     const raw: RawHeroStat[] = await res.json();
 

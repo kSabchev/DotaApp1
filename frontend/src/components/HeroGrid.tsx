@@ -35,15 +35,11 @@ export default function HeroGrid({ annotations }: { annotations?: Map<number, Gr
   const dispatch = useAppDispatch();
   const usedIds = useAppSelector(selectUsedHeroIds);
   const allHeroes = useAppSelector(selectAllHeroes);
-  const currentSlotIndex = useAppSelector(s => s.draft.currentSlotIndex);
   const phase = useAppSelector(s => s.draft.phase);
-  const slots = useAppSelector(s => s.draft.slots);
 
   const [search, setSearch] = useState('');
   const [attrFilter, setAttrFilter] = useState<Attribute | 'all'>('all');
   const [roleFilter, setRoleFilter] = useState<Role | 'all'>('all');
-
-  const currentSlot = slots[currentSlotIndex];
 
   const filtered = allHeroes.filter(h => {
     if (search && !h.displayName.toLowerCase().includes(search.toLowerCase())) return false;
@@ -54,21 +50,6 @@ export default function HeroGrid({ annotations }: { annotations?: Map<number, Gr
 
   return (
     <div className="flex flex-col gap-3 h-full">
-      {/* Phase indicator */}
-      {phase === 'drafting' && currentSlot && (
-        <div className={[
-          'text-center py-1.5 px-3 rounded-lg text-sm font-semibold',
-          currentSlot.phase === 'ban'
-            ? 'bg-red-900/40 text-red-300 border border-red-800'
-            : currentSlot.team === 'radiant'
-            ? 'bg-green-900/40 text-green-300 border border-green-800'
-            : 'bg-red-900/40 text-red-300 border border-red-800',
-        ].join(' ')}>
-          {currentSlot.phase === 'ban' ? 'BAN' : 'PICK'} —{' '}
-          <span className="capitalize">{currentSlot.team}</span>
-        </div>
-      )}
-
       {/* Filters */}
       <div className="flex gap-2 flex-wrap">
         <input

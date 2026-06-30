@@ -6,7 +6,7 @@ import type {
 } from './types';
 import { HEROES as LOCAL_HEROES } from './heroes';
 import {
-  INTERACTIONS, getCounterReasons, getLaneMatchupAdvantage,
+  INTERACTIONS, getCounterReasons, getLaneMatchupAdvantage as handLaneAdv,
   getLanePartnerScore, getMidMatchupNote, getSynergyPairs, getSynergyReasons,
 } from './interactions';
 import { analyzeHeroFreedom, getHeroFragility } from './heroFreedom';
@@ -32,6 +32,33 @@ export interface ScoringDeps {
 
 const NO_API_THREATS: NonNullable<ScoringDeps['getApiCounterThreats']> = () => [];
 const NO_META_BOOST: NonNullable<ScoringDeps['metaBanBoost']> = () => ({ boost: 0, note: undefined });
+
+// ─── Live matchup data (the "quantitative" layer) ─────────────────────────────
+//
+// The frontend registers an OpenDota win-rate advantage provider once on boot
+// (matchupService). Below a games threshold the provider returns 0, so confident
+// fresh win rates carry the matchup signal while the hand-authored table stays as
+// the explanatory "why". In Node/backtest no provider is registered → pure hand data.
+type MatchupAdvProvider = (heroId: number, enemyId: number) => number;
+let liveMatchupProvider: MatchupAdvProvider | null = null;
+
+export function setLiveMatchupProvider(fn: MatchupAdvProvider | null): void {
+  liveMatchupProvider = fn;
+}
+
+// True when confident live win-rate data exists for this matchup (drives provenance).
+function hasLiveAdv(a: number, b: number): boolean {
+  return !!liveMatchupProvider && liveMatchupProvider(a, b) !== 0;
+}
+
+// Blended head-to-head advantage of `a` vs `b` (−5..+5). Hand data is the floor;
+// when confident live data exists it dominates (0.65) but the hand sign/“why” remains.
+function matchupAdvantage(a: number, b: number): number {
+  const hand = handLaneAdv(a, b);
+  const live = liveMatchupProvider ? liveMatchupProvider(a, b) : 0;
+  if (live === 0) return hand;
+  return Math.max(-5, Math.min(5, Math.round(0.35 * hand + 0.65 * live)));
+}
 
 // ─── Internal helpers ────────────────────────────────────────────────────────
 
@@ -774,7 +801,7 @@ function buildCoachNarrative(
   if (mid && enemyPicks.length > 0) {
     const enemyMid = enemyPicks.find(h => h.metaRole === 'pos2' || h.preferredRoles.includes('mid'));
     if (enemyMid) {
-      const adv = getLaneMatchupAdvantage(mid.id, enemyMid.id);
+      const adv = matchupAdvantage(mid.id, enemyMid.id);
       const note = getMidMatchupNote(mid.id, enemyMid.id);
       if (note) {
         parts.push(note);
@@ -863,7 +890,7 @@ function buildLanePredictions(
     // Counter note vs enemy offlane
     if (carry && enemyOff.length > 0) {
       const worstMatchup = enemyOff.reduce((best, e) => {
-        const adv = getLaneMatchupAdvantage(e.id, carry.id);
+        const adv = matchupAdvantage(e.id, carry.id);
         return adv > best.adv ? { hero: e, adv } : best;
       }, { hero: enemyOff[0], adv: -999 });
       if (worstMatchup.adv >= 2) {
@@ -894,7 +921,7 @@ function buildLanePredictions(
 
     if (enemyMids.length > 0) {
       const enemyMid = enemyMids[0];
-      const adv = getLaneMatchupAdvantage(mid.id, enemyMid.id);
+      const adv = matchupAdvantage(mid.id, enemyMid.id);
       const note = getMidMatchupNote(mid.id, enemyMid.id);
       if (note) {
         verdict = note;
@@ -920,7 +947,7 @@ function buildLanePredictions(
     if (mid.complexity === 3) needs.push(`${mid.displayName} is mechanically demanding — high skill floor`);
 
     const strength = enemyMids.length > 0
-      ? Math.min(10, 5 + getLaneMatchupAdvantage(mid.id, enemyMids[0].id))
+      ? Math.min(10, 5 + matchupAdvantage(mid.id, enemyMids[0].id))
       : 6;
 
     predictions.push({
@@ -966,7 +993,7 @@ function buildLanePredictions(
     // Counter note vs enemy safe lane
     if (offlaner && enemySafe.length > 0) {
       const enemyCarry = enemySafe[0];
-      const adv = getLaneMatchupAdvantage(offlaner.id, enemyCarry.id);
+      const adv = matchupAdvantage(offlaner.id, enemyCarry.id);
       if (adv >= 2) counterNote = `${offlaner.displayName} pressures enemy ${enemyCarry.displayName} carry effectively`;
       else if (adv <= -2) {
         counterNote = `Enemy ${enemyCarry.displayName} is hard to kill from offlane`;
@@ -1012,15 +1039,21 @@ function computeLaneMatchups(myPicks: Hero[], enemyPicks: Hero[]): LaneMatchupRe
   const results: LaneMatchupResult[] = [];
   for (const myHero of myPicks) {
     for (const enemyHero of enemyPicks) {
-      const advantage = getLaneMatchupAdvantage(myHero.id, enemyHero.id);
+      const advantage = matchupAdvantage(myHero.id, enemyHero.id);
       if (advantage === 0) continue;
+      const dataBacked = hasLiveAdv(myHero.id, enemyHero.id);
       const isMid = (myHero.metaRole === 'pos2' || myHero.preferredRoles.includes('mid')) &&
                     (enemyHero.metaRole === 'pos2' || enemyHero.preferredRoles.includes('mid'));
-      const note = getMidMatchupNote(myHero.id, enemyHero.id) ??
-        (advantage > 0
-          ? `${myHero.displayName} wins lane vs ${enemyHero.displayName}`
-          : `${myHero.displayName} struggles vs ${enemyHero.displayName} in lane`);
-      results.push({ heroId: myHero.id, enemyHeroId: enemyHero.id, advantage, note, isMid });
+      const directional = advantage > 0
+        ? `${myHero.displayName} wins lane vs ${enemyHero.displayName}`
+        : `${myHero.displayName} struggles vs ${enemyHero.displayName} in lane`;
+      // The authored note carries the "why", but drop it when live data has flipped
+      // the matchup's direction so the text never contradicts the blended number.
+      const handAdv = handLaneAdv(myHero.id, enemyHero.id);
+      const midNote = getMidMatchupNote(myHero.id, enemyHero.id);
+      const note = midNote && (handAdv === 0 || Math.sign(handAdv) === Math.sign(advantage))
+        ? midNote : directional;
+      results.push({ heroId: myHero.id, enemyHeroId: enemyHero.id, advantage, note, isMid, dataBacked });
     }
   }
   return results.sort((a, b) => Math.abs(b.advantage) - Math.abs(a.advantage));
@@ -1162,7 +1195,7 @@ export function rankBanThreats(
     // 6. Mid matchup threat — if any of my picks play mid, this hero beats them
     const myMid = myPicks.find(h => h.metaRole === 'pos2' || h.preferredRoles.includes('mid'));
     if (myMid) {
-      const midAdv = getLaneMatchupAdvantage(hero.id, myMid.id);
+      const midAdv = matchupAdvantage(hero.id, myMid.id);
       if (midAdv >= 3) {
         score += midAdv * 3;
         const note = getMidMatchupNote(hero.id, myMid.id);
@@ -1392,7 +1425,7 @@ function computeDraftHealth(
     let worstEnemy: Hero | null = null;
     let worstAdv = -1;
     for (const enemy of enemyPicks) {
-      const adv = getLaneMatchupAdvantage(enemy.id, hero.id);
+      const adv = matchupAdvantage(enemy.id, hero.id);
       if (adv > worstAdv) { worstAdv = adv; worstEnemy = enemy; }
     }
     if (worstAdv >= 3 && worstEnemy) {
@@ -1459,7 +1492,7 @@ function buildGamePlanTimeline(
   if (draftHealth.laneAvoids.length > 0) {
     laningActions.push(draftHealth.laneAvoids[0].advice);
   } else if (carry && enemyCarry) {
-    const carrySafe = getLaneMatchupAdvantage(carry.id, enemyCarry.id);
+    const carrySafe = matchupAdvantage(carry.id, enemyCarry.id);
     if (carrySafe >= 2) laningActions.push(`${carry.displayName} should win the lane vs ${enemyCarry.displayName} — farm aggressively`);
   }
 
@@ -1721,7 +1754,7 @@ function rankPicks(
     // Mid matchup
     if (!hasMid && (hero.preferredRoles.includes('mid') || hero.metaRole === 'pos2')) {
       for (const em of enemyMids) {
-        const adv = getLaneMatchupAdvantage(hero.id, em.id);
+        const adv = matchupAdvantage(hero.id, em.id);
         if (adv >= 2) {
           score += adv * 3;
           reasons.push(getMidMatchupNote(hero.id, em.id) ?? `Wins mid vs ${em.displayName}`);
@@ -1825,7 +1858,7 @@ function rankBans(
     if (synReasons.length > 0) { score += synReasons.length * 3; reasons.push(`Fits enemy draft: ${synReasons[0]}`); }
 
     if (myMid) {
-      const adv = getLaneMatchupAdvantage(hero.id, myMid.id);
+      const adv = matchupAdvantage(hero.id, myMid.id);
       if (adv >= 2) {
         score += adv * 3;
         reasons.push(getMidMatchupNote(hero.id, myMid.id) ?? `Beats your mid ${myMid.displayName}`);

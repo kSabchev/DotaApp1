@@ -2,8 +2,7 @@
 // itemPopularity, resolving numeric item ids to names/icons via the backend's
 // item-constants map. Cached per hero for the session.
 import { itemIconUrl } from '../../../shared/items';
-
-const BACKEND = 'http://localhost:3001/api';
+import { API_BASE as BACKEND } from '../config';
 
 export interface BuildItem {
   id: number;

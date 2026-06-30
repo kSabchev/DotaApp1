@@ -265,7 +265,7 @@ Final slice of the "draft brain": *when* to commit a hero, based on how countera
 - Threaded as an optional `pickContext` through `analyzeTeam → rankPicks`. Each suggestion gets a `timing`: `commit_now` (protected slot or your final pick — fragile heroes get a bonus + "free game" reason), `save_for_later` (fragile + the enemy can still respond → penalty + "save for a later pick"), or `safe_now` (resilient → small early bonus). Your *last* pick never says "save for later" — there's nowhere later to save it.
 - `AnalysisPanel` shows a draft-position note for the team currently picking ("🔓 Last pick — free game", "Early pick — favour safe/flexible heroes", "N enemy picks can still respond") plus per-suggestion **commit now** / **save for last** badges.
 - 7 new tests in `pickTiming.test.ts` (slot counting, save-for-later, commit-now on protected/last-pick slots, no-context) — 58 tests total.
-- *Known minor gap:* the timing note is hidden on a team's very first pick (the analysis block requires ≥1 pick); it shows from the second pick onward.
+- *(Resolved in Session 19's panel rewrite — the timing note now shows on a team's opening pick too, since suggestions are no longer gated behind ≥1 pick.)*
 
 ### Session 18 — Turn card + inline grid annotations
 Tightens the moment-to-moment drafting loop so the assistant reads like a coach.
@@ -276,6 +276,31 @@ Tightens the moment-to-moment drafting loop so the assistant reads like a coach.
 ### Session 19 — Collapsible, reordered side panel
 - **Collapsible sections** — Threats to Ban, Draft Verdict, Items to Build vs Enemy, Matchup Grades, Lane Predictions, Team Profile, Suggested Picks, and Suggested Bans now collapse/expand via a clickable header + chevron. A generic `Section` wrapper handles the five inline sections; the three standalone components (`DraftVerdictCard`, `MatchupItemPanel`, `MatchupGradesPanel`) got their own internal collapse so they keep their styling (e.g. the verdict's rating-colored border).
 - **Action-aware ordering** — `AnalysisPanel` now renders sections from a keyed map in an order driven by the team's *next move*: on a **pick** turn Suggested Picks leads; on a **ban** turn Suggested Bans + Threats to Ban lead. Everything else keeps its prior relative order.
+
+### Session 20 — Live win-rate data + broadened free-game recall
+**Live-data foundation** — the scoring engine now blends live OpenDota matchup win-rates into its lane/counter signal, keeping the hand-authored table as the explanatory "why".
+- `shared/scoring.ts`: a register-once `setLiveMatchupProvider()` + a blended `matchupAdvantage(a, b)` (`0.35·hand + 0.65·live` when confident win-rate data exists, else hand only). The frontend registers `getApiMatchupAdvantage` on boot; the backend / backtest register nothing, so they stay pure hand data (and the existing tests are unaffected).
+- **Provenance** — lane/mid matchup rows show a small `● live` badge when win-rate-backed (`LaneMatchupResult.dataBacked`); an authored note is dropped when live data has flipped the matchup's direction, so the text never contradicts the number.
+- `useMatchupVersion` hook primes win-rates and re-runs the analysis as data streams in (wired into all three `analyzeTeam` callers).
+- **Bugs uncovered & fixed:** `matchupService` / `metaService` were fetching *relative* `/api/...` URLs that hit the Vite dev server and silently failed — repointed at the shared backend base; and the backend OpenDota proxy had no timeout (an unreachable upstream hung the route forever) — added a 7 s `odFetch` to all four proxy calls.
+
+**Broadened counter recall (free game)** — `analyzeHeroFreedom` was over-reporting "free game" because mechanic-counter detection used only a small hand provider map. Added a `utilityTag → mechanic` derivation (`silence`, `lockdown` → hard-control, `dispel`; **`stun` deliberately excluded** as too common). Precision is preserved because matches are still gated by the picked hero's own vulnerabilities.
+
+**Config** — centralized the backend base URL into `frontend/src/config.ts` (`API_BASE`, overridable via the `VITE_API_BASE` env var); all six call sites now import it instead of hardcoding `localhost:3001`.
+
+### Session 21 — Coaching-brain validation: predictive or explanatory?
+Re-ran and extended the model experiment (`backend/src/model/experiment.ts`) to answer whether the "draft brain" adds **predictive** win-probability accuracy or is purely explanatory — turning fragility/exposure, role-coverage, lane advantage, **and the four matchup grades** into per-match features and backtesting AUC against the 0.577 baseline (5-fold CV, 2 500 pro matches).
+
+| Config | AUC |
+|--------|-----|
+| **A**  hero + learned pairs (baseline) | **0.5768** |
+| **B**  A + derived + matchup grades | 0.5746 |
+| **C**  coaching features only (no hero) | 0.5064 |
+| **D**  hero-only + coaching | 0.5595 |
+| **E**  A + matchup grades only | 0.5737 |
+
+- **No lift.** Adding the full coaching layer (B) — or the matchup grades alone (E) — does not improve on the baseline; standalone (C), the heuristics are barely above a coin flip (0.506). Coaching-feature weights come out tiny and several are *inverted*: the model is fitting noise once the hero + synergy/counter pair features already capture the real draft signal.
+- **Conclusion:** the coaching brain is the **explanatory / UX layer** (the "why", in-draft guidance), not a predictive lever. The win-probability model is at its draft-only ceiling (~0.577); accuracy gains have to come from different inputs (opponent scouting / player hero pools, parsed in-game data), not more draft heuristics. This de-risks where to invest next.
 
 ---
 
@@ -354,6 +379,7 @@ backend/src/
 │   ├── calibrate.ts             # fitTemperature() via grid search
 │   ├── features.ts              # buildFeatureSpace(), matchToRow()
 │   ├── logreg.ts                # L2 logistic regression + predictLogit()
+│   ├── experiment.ts            # Coaching-brain validation: derived/grade feats → CV AUC
 │   └── train.ts                 # 5-fold CV → temperature cal → saves model JSON
 ├── routes/
 │   ├── heroes.ts                # /heroes, /heroes/stats, /heroes/:id/matchups, /:id/items

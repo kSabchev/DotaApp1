@@ -1,6 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-
-const BACKEND = 'http://localhost:3001/api';
+import { API_BASE as BACKEND } from '../config';
 
 export interface OpenDotaHero {
   id: number;

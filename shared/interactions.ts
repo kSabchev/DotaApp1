@@ -214,7 +214,7 @@ const RAW: RawInteraction[] = [
 
   { hero: 'omniknight', target: 'sven', synergyScore: 8,  synergyType: 'save_enable',   reason: 'Guardian Angel makes Sven immune to physical during God\'s Strength' },
   { hero: 'omniknight', target: 'medusa', synergyScore: 9,  synergyType: 'save_enable',   reason: 'Guardian Angel makes Medusa nearly unkillable in fights' },
-  { hero: 'omniknight', target: 'wisp', synergyScore: 8,  synergyType: 'save_enable',   reason: 'Io sustains Medusa through long fights with Overcharge' },
+  { hero: 'medusa', target: 'wisp', synergyScore: 8,  synergyType: 'save_enable',   reason: 'Io sustains Medusa through long fights with Overcharge' },
   { hero: 'lich', target: 'medusa', synergyScore: 7,  synergyType: 'save_enable',   reason: 'Lich Frost Shield and Sacrifice helps Medusa in lane' },
   { hero: 'oracle', target: 'medusa', synergyScore: 8,  synergyType: 'save_enable',   reason: 'Oracle False Promise keeps Medusa alive through burst combos' },
   { hero: 'oracle', target: 'juggernaut',  synergyScore: 9,  synergyType: 'save_enable',   reason: 'Oracle False Promise + Juggernaut Blade Fury is near-unkillable combo' },

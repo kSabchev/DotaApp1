@@ -3,6 +3,7 @@ import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectDraft, selectRadiantPicks, selectDirePicks, selectAvailableHeroes, selectAllHeroes } from '../store/selectors';
 import { undoLastPick, resetDraft, setMode, setBansEnabled, setStartingTeam } from '../store/draftSlice';
 import { analyzeTeam, pickContextForTeam, rankBanThreats, type BanThreat } from '../utils/scoring';
+import { useMatchupVersion } from '../data/useMatchupVersion';
 import TeamPanel from './TeamPanel';
 import BanPanel from './BanPanel';
 import HeroGrid, { type GridAnnotation } from './HeroGrid';
@@ -37,15 +38,18 @@ export default function DraftScreen() {
   const radiantCtx = useMemo(() => pickContextForTeam(slots, 'radiant', currentSlotIndex), [slots, currentSlotIndex]);
   const direCtx = useMemo(() => pickContextForTeam(slots, 'dire', currentSlotIndex), [slots, currentSlotIndex]);
 
+  // Live OpenDota win-rates blended into matchup advantage; recompute as data loads.
+  const matchupVersion = useMatchupVersion([...radiantPicks, ...direPicks]);
+
   const radiantAnalysis = useMemo(
     () => analyzeTeam(radiantPicks, direPicks, availableIds, allHeroes, roleAssignments, radiantCtx),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [radiantPicks.join(','), direPicks.join(','), availableIds.join(','), allHeroes.length, JSON.stringify(roleAssignments), JSON.stringify(radiantCtx)],
+    [radiantPicks.join(','), direPicks.join(','), availableIds.join(','), allHeroes.length, JSON.stringify(roleAssignments), JSON.stringify(radiantCtx), matchupVersion],
   );
   const direAnalysis = useMemo(
     () => analyzeTeam(direPicks, radiantPicks, availableIds, allHeroes, roleAssignments, direCtx),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [direPicks.join(','), radiantPicks.join(','), availableIds.join(','), allHeroes.length, JSON.stringify(roleAssignments), JSON.stringify(direCtx)],
+    [direPicks.join(','), radiantPicks.join(','), availableIds.join(','), allHeroes.length, JSON.stringify(roleAssignments), JSON.stringify(direCtx), matchupVersion],
   );
 
   // Active turn → grid annotations + the single "next action" card.

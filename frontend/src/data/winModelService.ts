@@ -2,8 +2,7 @@
 // win-probability lookup for the live draft. Degrades gracefully (returns null)
 // if the model isn't available.
 import { predictRadiantWinProb, type WinModel } from '../../../shared/winModel';
-
-const BACKEND = 'http://localhost:3001/api';
+import { API_BASE as BACKEND } from '../config';
 
 let model: WinModel | null = null;
 let loaded = false;

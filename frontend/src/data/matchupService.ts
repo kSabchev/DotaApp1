@@ -1,6 +1,7 @@
 // Fetches win-rate based matchup data from OpenDota (via backend proxy).
 // Returns advantage scores in [-5, +5] derived from win rate delta vs 50%.
 // Results are cached in memory for the session.
+import { API_BASE as BACKEND } from '../config';
 
 interface OpenDotaMatchup {
   hero_id: number;
@@ -11,8 +12,14 @@ interface OpenDotaMatchup {
 // heroId → Map<enemyId, advantage>
 const cache = new Map<number, Map<number, number>>();
 const pending = new Map<number, Promise<void>>();
+let version = 0; // bumped each time a hero's matchups finish loading
 
 const MIN_GAMES = 500; // ignore matchups with too few samples
+
+// Monotonic counter — include in memo deps to recompute analysis as live data streams in.
+export function getMatchupsVersion(): number {
+  return version;
+}
 
 function toAdvantage(winRate: number): number {
   // wr 0.60 → +5, wr 0.55 → +2.5, wr 0.50 → 0, wr 0.45 → -2.5, wr 0.40 → -5
@@ -22,7 +29,7 @@ function toAdvantage(winRate: number): number {
 
 async function fetchMatchups(heroId: number): Promise<void> {
   try {
-    const res = await fetch(`/api/heroes/${heroId}/matchups`);
+    const res = await fetch(`${BACKEND}/heroes/${heroId}/matchups`, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) return;
     const data: OpenDotaMatchup[] = await res.json();
     const map = new Map<number, number>();
@@ -32,6 +39,7 @@ async function fetchMatchups(heroId: number): Promise<void> {
       map.set(m.hero_id, toAdvantage(wr));
     }
     cache.set(heroId, map);
+    version++;
   } catch {
     // Network unavailable — leave cache empty for this hero
   }

@@ -252,6 +252,7 @@ export interface LaneMatchupResult {
   advantage: number;
   note: string;
   isMid: boolean;
+  dataBacked?: boolean;  // true when live win-rate data contributed to the advantage
 }
 
 export interface SynergyPair {

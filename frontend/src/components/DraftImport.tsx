@@ -4,6 +4,7 @@ import { selectAllHeroes } from '../store/selectors';
 import { loadDraft } from '../store/draftSlice';
 import { generateId } from '../data/draftStorage';
 import { inferRoles } from '../utils/scoring';
+import { API_BASE } from '../config';
 import type { OpenDotaMatch } from '../services/api';
 
 interface Props {
@@ -24,7 +25,7 @@ export default function DraftImport({ onClose }: Props) {
     setError(null);
     setPreview(null);
     try {
-      const res = await fetch(`http://localhost:3001/api/matches/${matchId.trim()}`);
+      const res = await fetch(`${API_BASE}/matches/${matchId.trim()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: OpenDotaMatch = await res.json();
       if (!data.picks_bans) throw new Error('No draft data in this match');

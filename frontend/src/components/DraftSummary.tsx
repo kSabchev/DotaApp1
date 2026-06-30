@@ -2,6 +2,7 @@ import { useMemo, useEffect, useState, useRef } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectRadiantPicks, selectDirePicks, selectAvailableHeroes, selectAllHeroes } from '../store/selectors';
 import { analyzeTeam } from '../utils/scoring';
+import { useMatchupVersion } from '../data/useMatchupVersion';
 import {
   getRadiantWinProbability, isWinModelLoaded, loadWinModel, getModelInfo,
 } from '../data/winModelService';
@@ -27,15 +28,18 @@ export default function DraftSummary() {
   const roleAssignments = useAppSelector(s => s.draft.roleAssignments) as Record<number, Role>;
   const availableIds = availableHeroes.map(h => h.id);
 
+  // Live OpenDota win-rates blended into matchup advantage; recompute as data loads.
+  const matchupVersion = useMatchupVersion([...radiantPicks, ...direPicks]);
+
   const radiantAnalysis = useMemo(
     () => analyzeTeam(radiantPicks, direPicks, availableIds, allHeroes, roleAssignments),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [radiantPicks.join(','), direPicks.join(','), allHeroes.length, JSON.stringify(roleAssignments)],
+    [radiantPicks.join(','), direPicks.join(','), allHeroes.length, JSON.stringify(roleAssignments), matchupVersion],
   );
   const direAnalysis = useMemo(
     () => analyzeTeam(direPicks, radiantPicks, availableIds, allHeroes, roleAssignments),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [direPicks.join(','), radiantPicks.join(','), allHeroes.length, JSON.stringify(roleAssignments)],
+    [direPicks.join(','), radiantPicks.join(','), allHeroes.length, JSON.stringify(roleAssignments), matchupVersion],
   );
 
   const winner =
@@ -74,7 +78,7 @@ export default function DraftSummary() {
     <div className="max-w-4xl mx-auto p-6 flex flex-col gap-6">
       <h2 className="text-2xl font-black text-dota-accent text-center">Draft Analysis</h2>
 
-      {/* Win probability (model) + draft-quality advantage (heuristic) */}
+      {/* Predicted win probability (trained model — draft signal only) */}
       <div className="bg-dota-surface rounded-xl border border-dota-border p-5 flex flex-col gap-3">
         {radiantPct !== null ? (
           <>
@@ -111,12 +115,6 @@ export default function DraftSummary() {
             )}
           </div>
         )}
-
-        {/* Heuristic draft-quality score (secondary detail) */}
-        <div className="flex gap-4 justify-center text-xs text-gray-500 border-t border-dota-border/50 pt-2">
-          <span>Draft-quality score — Radiant <strong className="text-green-400">{radiantAnalysis.totalScore}</strong></span>
-          <span>Dire <strong className="text-red-400">{direAnalysis.totalScore}</strong></span>
-        </div>
       </div>
 
       {/* Side-by-side analysis */}

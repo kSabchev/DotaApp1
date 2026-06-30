@@ -2,6 +2,7 @@ import { useMemo, Fragment, type ReactNode } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectRadiantPicks, selectDirePicks, selectAvailableHeroes, selectAllHeroes } from '../store/selectors';
 import { analyzeTeam, pickContextForTeam } from '../utils/scoring';
+import { useMatchupVersion } from '../data/useMatchupVersion';
 import ScoreBar from './ScoreBar';
 import HeroPortrait from './HeroPortrait';
 import TeamTags from './TeamTags';
@@ -46,10 +47,13 @@ export default function AnalysisPanel({ team }: Props) {
     return null;
   }, [slots, currentSlotIndex, team]);
 
+  // Live OpenDota win-rates blended into matchup advantage; recompute as data loads.
+  const matchupVersion = useMatchupVersion([...myPicks, ...enemyPicks]);
+
   const analysis = useMemo(
     () => analyzeTeam(myPicks, enemyPicks, availableIds, allHeroes, roleAssignments, pickContext),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [myPicks.join(','), enemyPicks.join(','), availableIds.join(','), allHeroes.length, JSON.stringify(roleAssignments), JSON.stringify(pickContext)],
+    [myPicks.join(','), enemyPicks.join(','), availableIds.join(','), allHeroes.length, JSON.stringify(roleAssignments), JSON.stringify(pickContext), matchupVersion],
   );
 
   const totalMax = 25 + 15 + 10 + 10 + 10 + 10 + 10;
@@ -142,7 +146,11 @@ export default function AnalysisPanel({ team }: Props) {
                 <span className={['text-sm font-black', color].join(' ')}>{m.advantage > 0 ? '▲' : '▼'}</span>
                 {enemy && <HeroPortrait hero={enemy} size="sm" />}
               </div>
-              <p className="text-[10px] text-gray-400 leading-tight">{m.note}</p>
+              <p className="text-[10px] text-gray-400 leading-tight flex-1">{m.note}</p>
+              {m.dataBacked && (
+                <span className="shrink-0 self-center text-[8px] font-bold uppercase tracking-wide text-emerald-400/80"
+                      title="Backed by live OpenDota win-rate data">● live</span>
+              )}
             </div>
           );
         })}
@@ -163,7 +171,11 @@ export default function AnalysisPanel({ team }: Props) {
                 <span className={['text-xs font-bold', color].join(' ')}>{m.advantage > 0 ? '+' : ''}{m.advantage}</span>
                 {enemy && <HeroPortrait hero={enemy} size="sm" />}
               </div>
-              <p className="text-[10px] text-gray-500 leading-tight truncate">{m.note}</p>
+              <p className="text-[10px] text-gray-500 leading-tight truncate flex-1">{m.note}</p>
+              {m.dataBacked && (
+                <span className="shrink-0 text-[8px] font-bold uppercase tracking-wide text-emerald-400/80"
+                      title="Backed by live OpenDota win-rate data">● live</span>
+              )}
             </div>
           );
         })}

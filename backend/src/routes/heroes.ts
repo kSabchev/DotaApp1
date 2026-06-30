@@ -4,6 +4,18 @@ import fetch from 'node-fetch';
 const router = Router();
 const OPENDOTA = 'https://api.opendota.com/api';
 
+// Fetch with a hard timeout so an unreachable/slow OpenDota fails fast and the
+// route degrades (rather than holding the request — and the UI — open forever).
+async function odFetch(url: string, ms = 7000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Simple in-memory cache
 let heroCache: { data: unknown; ts: number } | null = null;
 let statsCache: { data: unknown; ts: number } | null = null;
@@ -20,7 +32,7 @@ router.get('/', async (_req, res) => {
     if (heroCache && Date.now() - heroCache.ts < TTL) {
       return res.json(heroCache.data);
     }
-    const r = await fetch(`${OPENDOTA}/heroes`);
+    const r = await odFetch(`${OPENDOTA}/heroes`);
     const data = await r.json();
     heroCache = { data, ts: Date.now() };
     res.json(data);
@@ -34,7 +46,7 @@ router.get('/stats', async (_req, res) => {
     if (statsCache && Date.now() - statsCache.ts < STATS_TTL) {
       return res.json(statsCache.data);
     }
-    const r = await fetch(`${OPENDOTA}/heroStats`);
+    const r = await odFetch(`${OPENDOTA}/heroStats`);
     const data = await r.json();
     statsCache = { data, ts: Date.now() };
     res.json(data);
@@ -54,7 +66,7 @@ router.get('/:id/matchups', async (req, res) => {
   }
 
   try {
-    const r = await fetch(`${OPENDOTA}/heroes/${heroId}/matchups`);
+    const r = await odFetch(`${OPENDOTA}/heroes/${heroId}/matchups`);
     if (!r.ok) throw new Error(`OpenDota returned ${r.status}`);
     const data = await r.json();
     matchupCache.set(heroId, { data, ts: Date.now() });
@@ -76,7 +88,7 @@ router.get('/:id/items', async (req, res) => {
   }
 
   try {
-    const r = await fetch(`${OPENDOTA}/heroes/${heroId}/itemPopularity`);
+    const r = await odFetch(`${OPENDOTA}/heroes/${heroId}/itemPopularity`);
     if (!r.ok) throw new Error(`OpenDota returned ${r.status}`);
     const data = await r.json();
     itemPopCache.set(heroId, { data, ts: Date.now() });
