@@ -5,6 +5,8 @@ import './matchups.test';
 import './scoring.test';
 import './draftPlanning.test';
 import './heroFreedom.test';
+import './capabilities.test';
+import './heroTraits.test';
 import './liveMatchup.test';
 import './pickTiming.test';
 import './matchupGrades.test';

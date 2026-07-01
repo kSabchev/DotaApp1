@@ -84,6 +84,59 @@ export interface PowerWindow {
   lateLabel: string;
 }
 
+// ─── Team capability profile ─────────────────────────────────────────────────
+// A structured "what this comp can and can't do" vector. Each axis is 0–10 with
+// the heroes driving it. Win conditions and the radar both read from this.
+
+export type CapabilityAxisId =
+  | 'teamfight'   // AoE lockdown + burst for 5v5
+  | 'pickoff'     // find and execute isolated heroes
+  | 'gank'        // early roam pressure — enemy can't farm/show safely
+  | 'push'        // tower / siege pressure
+  | 'splitpush'   // map spread, side-lane threat
+  | 'waveClear'   // clear and hold creep waves
+  | 'roshan'      // take Roshan early and reliably
+  | 'sustain'     // heal / save / peel to survive
+  | 'enable'      // buffs and auras that amplify allies
+  | 'scaling'     // outscale into the late game
+  | 'damage';     // raw damage threat (amount; type lands in a later phase)
+
+export interface CapabilityAxis {
+  id: CapabilityAxisId;
+  label: string;
+  score: number;          // 0–10
+  contributors: number[]; // heroIds driving this axis
+  note: string;           // short "what this enables / what's missing"
+}
+
+export type CapabilityProfile = Record<CapabilityAxisId, CapabilityAxis>;
+
+// ─── Team traits (Phase 2): damage type, space economy, Roshan reliance ───────
+
+export type DamageType = 'physical' | 'magical' | 'pure' | 'mixed';
+
+export interface DamageProfile {
+  physical: number;  // weighted hero counts (mixed splits half/half)
+  magical: number;
+  pure: number;
+  dominant: 'physical' | 'magical' | 'pure' | 'balanced';
+  note: string;
+}
+
+export interface SpaceBalance {
+  providerIds: number[]; // heroes that create space/pressure
+  userIds: number[];     // heroes that need farm + protection to scale
+  rating: 'balanced' | 'user_heavy' | 'no_space' | 'neutral';
+  note: string;
+}
+
+export interface TeamTraits {
+  damage: DamageProfile;
+  space: SpaceBalance;
+  roshanReliantIds: number[];
+  roshanNote: string;
+}
+
 // ─── Lane analysis ───────────────────────────────────────────────────────────
 
 export interface LaneSummary {
@@ -304,10 +357,11 @@ export interface TeamAnalysis {
   draftHealth: DraftHealthReport;
   gamePlanTimeline: GamePlanTimeline;
   heroFreedom: HeroFreedom[];
+  capabilities: CapabilityProfile;
+  traits: TeamTraits;
 
   // Recommendations
   recommendedPicks: HeroRecommendation[];
-  recommendedBans: HeroRecommendation[];
 }
 
 export interface DraftState {

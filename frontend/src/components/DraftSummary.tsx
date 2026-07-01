@@ -18,6 +18,7 @@ import HeroBuildPanel from './HeroBuildPanel';
 import DraftHealthPanel from './DraftHealthPanel';
 import GamePlanTimelinePanel from './GamePlanTimelinePanel';
 import HeroFreedomPanel from './HeroFreedomPanel';
+import CapabilityPanel from './CapabilityPanel';
 import RolePicker from './RolePicker';
 
 export default function DraftSummary() {
@@ -116,6 +117,12 @@ export default function DraftSummary() {
           </div>
         )}
       </div>
+
+      {/* Team capability profile — what each comp can and can't do */}
+      <CapabilityPanel
+        radiant={radiantAnalysis.capabilities} dire={direAnalysis.capabilities}
+        radiantTraits={radiantAnalysis.traits} direTraits={direAnalysis.traits}
+      />
 
       {/* Side-by-side analysis */}
       <div className="grid grid-cols-2 gap-4">

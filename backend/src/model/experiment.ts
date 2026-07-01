@@ -1,19 +1,20 @@
 // EXPERIMENT: do the rule-based "draft brain" signals add predictive AUC on top
 // of the learned hero + synergy/counter pair model?
 //
-// We compute per-match DERIVED features from the draft (radiant minus dire) using
+// Per match we compute DERIVED features from the draft (radiant minus dire) via
 // the shared scoring engine, then run the SAME 5-fold CV as train.ts on several
-// feature configs and compare held-out AUC / log-loss. Two coaching groups:
-//   • derived  — analyzeTeam signals: synergyΔ, counterΔ, freeGameΔ (fragility-
-//     weighted exposure), laneAdvNet, roleCovΔ, totalScoreΔ
-//   • grades   — gradeMatchups 0–10 scales: Team Synergy, Lane Duos, Lane vs
-//     Enemy, Game Counters (radiant minus dire)
+// feature configs and compare held-out AUC / log-loss. Three coaching groups:
+//   • derived  — analyzeTeam signals: synergyΔ, counterΔ, freeGameΔ, laneAdvNet,
+//                roleCovΔ, totalScoreΔ
+//   • grades   — gradeMatchups 0–10 scales: synergy, lane duos, lane-vs, game ctr
+//   • caps     — the team Capability Profile (11 axis deltas) + traits: space-net,
+//                physical-damage-share Δ, Roshan-reliant Δ   ← Phase 4 question
 //
 //   A  hero + learned pairs                 (production baseline, ~0.577 on pro)
-//   B  A + derived + grades                 (the full draft brain)
-//   C  derived + grades only                (standalone signal of the heuristics)
-//   D  hero-only + derived + grades
-//   E  A + grades only                      (isolates the matchup-grades lift)
+//   B  A + derived + grades                 (prior coaching stack, for reference)
+//   C  A + capabilities                     (does the capability layer add lift?)
+//   D  capabilities only                    (standalone capability signal)
+//   E  A + derived + grades + capabilities  (everything)
 //
 // Run:  npx ts-node --transpile-only src/model/experiment.ts pro
 import { fit, predictLogit, type SparseRow } from './logreg';
@@ -23,7 +24,8 @@ import { loadMatchesForBacktest } from '../db';
 import { getHeroPool } from '../ingest/heroPool';
 import { analyzeTeam } from '../../../shared/scoring';
 import { gradeMatchups } from '../../../shared/matchupGrades';
-import type { Hero, HeroFreedom } from '../../../shared/types';
+import { CAPABILITY_ORDER } from '../../../shared/capabilities';
+import type { Hero, HeroFreedom, TeamAnalysis, TeamTraits } from '../../../shared/types';
 
 const FOLDS = 5;
 
@@ -44,14 +46,15 @@ function shuffled<T>(arr: T[], seed = 42): T[] {
 
 const STATUS_W: Record<HeroFreedom['status'], number> = { free: 0, minor: 1, contested: 2, shut_down: 3 };
 const exposure = (f: HeroFreedom[]) => f.reduce((a, h) => a + STATUS_W[h.status], 0);
+const physShare = (t: TeamTraits) => t.damage.physical / (t.damage.physical + t.damage.magical + t.damage.pure || 1);
+const spaceNet = (t: TeamTraits) => t.space.providerIds.length - t.space.userIds.length;
 
 const DERIVED_NAMES = ['synergyΔ', 'counterΔ', 'freeGameΔ', 'laneAdvNet', 'roleCovΔ', 'totalScoreΔ'];
 const GRADE_NAMES   = ['synGradeΔ', 'laneDuoΔ', 'laneVsEnΔ', 'gameCntrΔ'];
+const CAP_NAMES     = [...CAPABILITY_ORDER, 'spaceNetΔ', 'physShareΔ', 'roshReliantΔ'];
 
-// analyzeTeam-based derived features, signed from radiant's perspective.
-function derivedRaw(radIds: number[], direIds: number[], pool: Hero[]): number[] {
-  const rA = analyzeTeam(radIds, direIds, [], pool, {});
-  const rD = analyzeTeam(direIds, radIds, [], pool, {});
+// derived features, signed from radiant's perspective (reuse the two analyses).
+function derivedFrom(rA: TeamAnalysis, rD: TeamAnalysis): number[] {
   const laneNet = rA.laneMatchups.reduce((a, x) => a + x.advantage, 0);
   const cov = (mr: number) => 5 - mr;
   return [
@@ -61,6 +64,17 @@ function derivedRaw(radIds: number[], direIds: number[], pool: Hero[]): number[]
     laneNet,
     cov(rA.draftVerdict.laneVerdict.missingRoles.length) - cov(rD.draftVerdict.laneVerdict.missingRoles.length),
     rA.totalScore - rD.totalScore,
+  ];
+}
+
+// Capability-profile axis deltas + trait deltas (Phase 1–3 features).
+function capsFrom(rA: TeamAnalysis, rD: TeamAnalysis): number[] {
+  const axisD = CAPABILITY_ORDER.map(id => rA.capabilities[id].score - rD.capabilities[id].score);
+  return [
+    ...axisD,
+    spaceNet(rA.traits) - spaceNet(rD.traits),
+    physShare(rA.traits) - physShare(rD.traits),
+    rA.traits.roshanReliantIds.length - rD.traits.roshanReliantIds.length,
   ];
 }
 
@@ -89,7 +103,7 @@ function standardize(raw: number[][], trainIdx: number[]): number[][] {
 
 interface Config {
   name: string; includePairs: boolean; lambda: number; minPair: number;
-  heroFeatures: boolean; useDerived: boolean; useGrades: boolean;
+  heroFeatures: boolean; useDerived: boolean; useGrades: boolean; useCaps: boolean;
 }
 
 async function main() {
@@ -106,24 +120,26 @@ async function main() {
   const labels = matches.map(m => m.radiant_win);
   console.log(`Corpus: ${matches.length} ${source} matches (5v5, all heroes resolved).`);
 
-  console.log('Computing derived + grade draft-brain features per match…');
+  console.log('Computing derived + grade + capability features per match…');
   const t0 = Date.now();
-  const derived: number[][] = [];
-  const grades: number[][] = [];
+  const derived: number[][] = [], grades: number[][] = [], caps: number[][] = [];
   for (const m of matches) {
     const rad = m.radiant.map(id => byId.get(id)!);
     const dire = m.dire.map(id => byId.get(id)!);
-    derived.push(derivedRaw(m.radiant, m.dire, pool));
+    const rA = analyzeTeam(m.radiant, m.dire, [], pool, {});
+    const rD = analyzeTeam(m.dire, m.radiant, [], pool, {});
+    derived.push(derivedFrom(rA, rD));
+    caps.push(capsFrom(rA, rD));
     grades.push(gradesRaw(rad, dire));
   }
   console.log(`  done in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 
   const configs: Config[] = [
-    { name: 'A  hero + pairs (baseline)',  includePairs: true,  lambda: 25, minPair: 45, heroFeatures: true,  useDerived: false, useGrades: false },
-    { name: 'B  A + derived + grades',     includePairs: true,  lambda: 25, minPair: 45, heroFeatures: true,  useDerived: true,  useGrades: true  },
-    { name: 'C  derived + grades only',    includePairs: false, lambda: 2,  minPair: 20, heroFeatures: false, useDerived: true,  useGrades: true  },
-    { name: 'D  hero-only + der + grades', includePairs: false, lambda: 2,  minPair: 20, heroFeatures: true,  useDerived: true,  useGrades: true  },
-    { name: 'E  A + grades only',          includePairs: true,  lambda: 25, minPair: 45, heroFeatures: true,  useDerived: false, useGrades: true  },
+    { name: 'A  hero + pairs (baseline)',     includePairs: true,  lambda: 25, minPair: 45, heroFeatures: true,  useDerived: false, useGrades: false, useCaps: false },
+    { name: 'B  A + derived + grades',        includePairs: true,  lambda: 25, minPair: 45, heroFeatures: true,  useDerived: true,  useGrades: true,  useCaps: false },
+    { name: 'C  A + capabilities',            includePairs: true,  lambda: 25, minPair: 45, heroFeatures: true,  useDerived: false, useGrades: false, useCaps: true  },
+    { name: 'D  capabilities only',           includePairs: false, lambda: 2,  minPair: 20, heroFeatures: false, useDerived: false, useGrades: false, useCaps: true  },
+    { name: 'E  A + derived + grades + caps', includePairs: true,  lambda: 25, minPair: 45, heroFeatures: true,  useDerived: true,  useGrades: true,  useCaps: true  },
   ];
 
   for (const cfg of configs) {
@@ -137,39 +153,40 @@ async function main() {
       const base = cfg.heroFeatures ? space.nFeatures : 0;
       const zD = cfg.useDerived ? standardize(derived, trainIdx) : null;
       const zG = cfg.useGrades  ? standardize(grades,  trainIdx) : null;
+      const zC = cfg.useCaps    ? standardize(caps,    trainIdx) : null;
       const nD = zD ? derived[0].length : 0;
       const nG = zG ? grades[0].length : 0;
+      const nC = zC ? caps[0].length : 0;
 
       const buildRow = (i: number): SparseRow => {
         const row: SparseRow = cfg.heroFeatures ? matchToRow(matches[i], space) : [];
         if (zD) for (let k = 0; k < nD; k++) row.push({ idx: base + k, val: zD[i][k] });
         if (zG) for (let k = 0; k < nG; k++) row.push({ idx: base + nD + k, val: zG[i][k] });
+        if (zC) for (let k = 0; k < nC; k++) row.push({ idx: base + nD + nG + k, val: zC[i][k] });
         return row;
       };
       const trainRows = trainIdx.map(buildRow), trainY = trainIdx.map(i => labels[i]);
-      const model = fit(trainRows, trainY, { nFeatures: base + nD + nG, lambda: cfg.lambda, lr: 0.3, epochs: 3000 });
+      const model = fit(trainRows, trainY, { nFeatures: base + nD + nG + nC, lambda: cfg.lambda, lr: 0.3, epochs: 3000 });
       for (const i of testIdx) oofLogit[i] = predictLogit(model, buildRow(i));
     }
     const probs = oofLogit.map(z => 1 / (1 + Math.exp(-z)));
-    console.log(`\n${cfg.name.padEnd(30)} AUC ${auc(probs, labels).toFixed(4)}   log-loss ${logLoss(probs, labels).toFixed(4)}`);
+    console.log(`\n${cfg.name.padEnd(32)} AUC ${auc(probs, labels).toFixed(4)}   log-loss ${logLoss(probs, labels).toFixed(4)}`);
   }
 
-  // Inspect coaching-feature weights from a full-data fit of config B.
+  // Inspect capability-feature weights from a full-data fit of config C (A + caps).
   const space = buildFeatureSpace(matches, { includePairs: true, minPairCount: 45 });
-  const zD = standardize(derived, matches.map((_, i) => i));
-  const zG = standardize(grades,  matches.map((_, i) => i));
-  const nD = derived[0].length, nG = grades[0].length;
+  const zC = standardize(caps, matches.map((_, i) => i));
+  const nC = caps[0].length;
   const rows = matches.map((m, i) => {
     const r = matchToRow(m, space);
-    for (let k = 0; k < nD; k++) r.push({ idx: space.nFeatures + k, val: zD[i][k] });
-    for (let k = 0; k < nG; k++) r.push({ idx: space.nFeatures + nD + k, val: zG[i][k] });
+    for (let k = 0; k < nC; k++) r.push({ idx: space.nFeatures + k, val: zC[i][k] });
     return r;
   });
-  const model = fit(rows, labels, { nFeatures: space.nFeatures + nD + nG, lambda: 25, lr: 0.3, epochs: 3000 });
-  console.log('\nCoaching-feature weights (standardized, config B full-data fit):');
-  [...DERIVED_NAMES, ...GRADE_NAMES].forEach((n, k) => {
+  const model = fit(rows, labels, { nFeatures: space.nFeatures + nC, lambda: 25, lr: 0.3, epochs: 3000 });
+  console.log('\nCapability-feature weights (standardized, config C full-data fit):');
+  CAP_NAMES.forEach((n, k) => {
     const w = model.w[space.nFeatures + k];
-    console.log(`    ${n.padEnd(14)} ${w >= 0 ? '+' : ''}${w.toFixed(4)}`);
+    console.log(`    ${n.padEnd(13)} ${w >= 0 ? '+' : ''}${w.toFixed(4)}`);
   });
   console.log('\n(positive weight ⇒ higher value favours radiant; |weight| ≈ standardized impact)');
 }

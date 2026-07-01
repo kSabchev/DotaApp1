@@ -302,6 +302,20 @@ Re-ran and extended the model experiment (`backend/src/model/experiment.ts`) to 
 - **No lift.** Adding the full coaching layer (B) — or the matchup grades alone (E) — does not improve on the baseline; standalone (C), the heuristics are barely above a coin flip (0.506). Coaching-feature weights come out tiny and several are *inverted*: the model is fitting noise once the hero + synergy/counter pair features already capture the real draft signal.
 - **Conclusion:** the coaching brain is the **explanatory / UX layer** (the "why", in-draft guidance), not a predictive lever. The win-probability model is at its draft-only ceiling (~0.577); accuracy gains have to come from different inputs (opponent scouting / player hero pools, parsed in-game data), not more draft heuristics. This de-risks where to invest next.
 
+### Session 22 — One authoritative ban list
+The analysis panel had **two overlapping ban sections** that disagreed: a sparse "Suggested Bans" (often just one hero, surfaced by a hard-coded win-condition rule) and the richer "Threats to Ban". They came from two different functions written at different times.
+- **Removed** the legacy `rankBans()` and `analysis.recommendedBans` (and the `recommendedBans` field on `TeamAnalysis`), plus the "Suggested Bans" section in `AnalysisPanel`.
+- **"Threats to Ban"** (`rankBanThreats`) is now the single source — it strictly subsumes the old function (counters + enemy-synergy + win-condition cases + meta tiers + live win-rate threats + mid matchups, with Must Ban / High / Consider urgency). The three hard-coded win-condition cases were verified already covered before deletion.
+- **Ordering fixed** so the strong list leads: on a ban turn Threats to Ban comes first; on a pick turn Suggested Picks leads with Threats to Ban directly below.
+
+### Session 23 — Team Capability Profile
+A structured "what each comp can and can't do" layer, built in four phases.
+- **Profile (`shared/capabilities.ts`)** — `computeTeamCapabilities` scores 11 axes (Teamfight, Pick-off, Gank, Push, Split-push, Wave clear, Roshan, Sustain, Enable, Scaling, Damage) from the picked heroes' utility tags, each with the contributing heroes and a coaching note. Win-condition detection was **refactored to read from this profile** (single source of truth — the radar and the named win conditions can no longer disagree).
+- **Traits (`shared/heroTraits.ts`)** — hand-tagged **damage type** (physical / magical / pure / mixed, with an attribute fallback), **space economy** (creators vs. farm-hungry users), and **Roshan-reliant** heroes. Surfaces notes like *"80% magical — enemy can stack magic resist"* and *"3 farm-hungry cores but no space-creators."*
+- **UI (`CapabilityPanel`)** — a pure-SVG **dual-overlay radar** (your team vs. the enemy), a per-team **Can / Can't** summary, and damage-mix bars, in the post-draft report.
+- **Suggestions** — `rankPicks` now reasons about the profile: it rewards picks that **fill a capability gap**, **create space** for greedy comps, **balance lopsided damage**, or **extend an existing lead**, surfacing the insight as a suggestion reason (e.g. *"Fills your teamfight gap"*, *"Adds magical damage — your lineup is mostly physical"*).
+- **Validation** — backtested the capability + trait features through the same 5-fold CV harness: **no AUC lift** over the 0.577 baseline (A 0.5768 → +caps 0.5721; standalone 0.521). Like the rest of the coaching brain, it's an **explanatory / decision-support** layer, not a win-probability lever.
+
 ---
 
 ## File Map
@@ -312,6 +326,7 @@ frontend/src/
 │   ├── AnalysisPanel.tsx        # Per-team live analysis (MatchupItemPanel + MatchupGradesPanel)
 │   ├── BanThreatsPanel.tsx      # Ranked ban threats with urgency + meta line
 │   ├── BanPanel.tsx             # Ban slot display
+│   ├── CapabilityPanel.tsx      # Dual-overlay capability radar + damage/space/Rosh traits
 │   ├── ComparisonPanel.tsx      # Win probability bar (model) + heuristic comparison
 │   ├── DraftHistoryPanel.tsx    # Saved draft list with load/delete
 │   ├── DraftImport.tsx          # Import draft from match ID
@@ -351,6 +366,8 @@ frontend/src/
     └── scoring.ts               # analyzeTeam(), rankBanThreats(), win conditions
 
 shared/                          # Framework-free TS — used by both frontend and backend
+├── capabilities.ts              # computeTeamCapabilities() — 11-axis "can/can't" profile
+├── heroTraits.ts                # damage type, space economy, Roshan reliance (+ team aggregate)
 ├── heroFreedom.ts               # analyzeHeroFreedom() + fragility (free game vs. counters)
 ├── heroMechanics.ts             # 127-hero mechanic profiles (reliance/vulnerable)
 ├── heroMetadata.ts              # Metadata for all heroes (roles, metaRole, utilityTags)

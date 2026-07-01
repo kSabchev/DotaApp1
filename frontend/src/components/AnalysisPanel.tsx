@@ -264,29 +264,7 @@ export default function AnalysisPanel({ team }: Props) {
                     {rec.timing === 'commit_now' && <span className="text-[8px] px-1 py-0.5 rounded bg-green-900/60 text-green-300 font-bold">commit now</span>}
                     {rec.timing === 'save_for_later' && <span className="text-[8px] px-1 py-0.5 rounded bg-amber-900/60 text-amber-300 font-bold">save for last</span>}
                   </div>
-                  {rec.reasons.slice(0, 2).map((r, i) => (
-                    <span key={i} className="text-[10px] text-gray-500 leading-tight">{r}</span>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </Section>
-    ) : null,
-
-    suggestedBans: analysis.recommendedBans.length > 0 ? (
-      <Section title="Suggested Bans">
-        <div className="flex flex-col gap-2">
-          {analysis.recommendedBans.map(rec => {
-            const hero = allHeroes.find(h => h.id === rec.heroId);
-            if (!hero) return null;
-            return (
-              <div key={rec.heroId} className="flex gap-2 items-start">
-                <HeroPortrait hero={hero} size="sm" />
-                <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-semibold text-red-300">{hero.displayName}</span>
-                  {rec.reasons.slice(0, 2).map((r, i) => (
+                  {rec.reasons.slice(0, 3).map((r, i) => (
                     <span key={i} className="text-[10px] text-gray-500 leading-tight">{r}</span>
                   ))}
                 </div>
@@ -298,15 +276,15 @@ export default function AnalysisPanel({ team }: Props) {
     ) : null,
   };
 
-  // ── Ordering: suggestions lead; on a ban turn, bans + threats lead ────────────
+  // ── Ordering: suggestions lead; on a ban turn, ban threats lead ───────────────
   const base = [
     'threatsToBan', 'draftVerdict', 'itemsToBuild', 'matchupGrades', 'lanePredictions',
     'scoreBreakdown', 'comboSynergies', 'physicalStack', 'midMatchup', 'laneMatchups',
-    'strengths', 'weaknesses', 'teamProfile', 'missingUtility', 'suggestedPicks', 'suggestedBans',
+    'strengths', 'weaknesses', 'teamProfile', 'missingUtility', 'suggestedPicks',
   ];
   const priority = nextMove === 'ban'
-    ? ['suggestedBans', 'threatsToBan', 'suggestedPicks']
-    : ['suggestedPicks', 'suggestedBans'];
+    ? ['threatsToBan', 'suggestedPicks']
+    : ['suggestedPicks'];
   const order = [...priority, ...base.filter(k => !priority.includes(k))];
 
   return (

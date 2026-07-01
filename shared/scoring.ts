@@ -1,5 +1,5 @@
 import type {
-  ComboCallout, DraftHealthReport, DraftSlot, DraftTeam, GamePlanPhase, GamePlanTimeline,
+  CapabilityAxisId, CapabilityProfile, ComboCallout, DraftHealthReport, DraftSlot, DraftTeam, GamePlanPhase, GamePlanTimeline,
   HealthNote, HealthRating, Hero, HeroRecommendation, LanePrediction, LaneMatchupResult,
   LaneVerdictResult, MetaRole, PickContext, PickTiming, PowerWindow, Role, SynergyPair,
   TeamAnalysis, TempoStance, UtilityTag, VerdictRating, WinConditionId, WinConditionResult,
@@ -10,6 +10,8 @@ import {
   getLanePartnerScore, getMidMatchupNote, getSynergyPairs, getSynergyReasons,
 } from './interactions';
 import { analyzeHeroFreedom, getHeroFragility } from './heroFreedom';
+import { computeTeamCapabilities, CAPABILITY_ORDER, CAPABILITY_LABELS } from './capabilities';
+import { computeTeamTraits, damageTypeOf, spaceRoleOf } from './heroTraits';
 
 export type BanThreatUrgency = 'critical' | 'high' | 'medium';
 
@@ -258,14 +260,14 @@ function computePhysicalStack(picks: Hero[]): number {
 
 // ─── Win condition detection ─────────────────────────────────────────────────
 
-function detectWinConditions(picks: Hero[], physStack: number): WinConditionResult[] {
+// Win conditions are now a "named summary" of the capability profile — they read
+// the same axis scores (teamfight/push/pickoff/scaling) the radar shows, so the
+// two can never disagree. The splitpush gate keeps its identity check.
+function detectWinConditions(picks: Hero[], physStack: number, caps: CapabilityProfile): WinConditionResult[] {
   const results: WinConditionResult[] = [];
 
   // TEAMFIGHT — initiation + lockdown + AoE damage
-  const initCount = picks.filter(h => h.utilityTags.includes('initiation')).length;
-  const lockCount = picks.filter(h => h.utilityTags.includes('lockdown') || h.utilityTags.includes('stun')).length;
-  const aoeCount = picks.filter(h => h.utilityTags.includes('wave_clear') || h.utilityTags.includes('burst')).length;
-  const tfStr = Math.min(10, initCount * 3 + lockCount * 2 + aoeCount);
+  const tfStr = caps.teamfight.score;
   if (tfStr >= 4) {
     results.push({
       id: 'teamfight', label: 'Teamfight', strength: tfStr,
@@ -275,10 +277,7 @@ function detectWinConditions(picks: Hero[], physStack: number): WinConditionResu
   }
 
   // DEATHBALL — tower damage + wave clear + early-mid pressure
-  const towerCount = picks.filter(h => h.utilityTags.includes('tower_damage')).length;
-  const waveCount = picks.filter(h => h.utilityTags.includes('wave_clear')).length;
-  const pressureCount = picks.filter(h => h.utilityTags.includes('lane_pressure')).length;
-  const dbStr = Math.min(10, towerCount * 3 + waveCount * 2 + pressureCount * 2);
+  const dbStr = caps.push.score;
   if (dbStr >= 5) {
     results.push({
       id: 'deathball', label: 'Deathball Push', strength: dbStr,
@@ -288,10 +287,7 @@ function detectWinConditions(picks: Hero[], physStack: number): WinConditionResu
   }
 
   // PICKOFF — mobility + silence/vision + catch mechanics
-  const mobCount = picks.filter(h => h.utilityTags.includes('mobility')).length;
-  const hasSilence = picks.some(h => h.utilityTags.includes('silence'));
-  const hasVision = picks.some(h => h.utilityTags.includes('vision'));
-  const poStr = Math.min(10, mobCount * 2 + (hasSilence ? 3 : 0) + (hasVision ? 2 : 0));
+  const poStr = caps.pickoff.score;
   if (poStr >= 5) {
     results.push({
       id: 'pickoff', label: 'Pick-off', strength: poStr,
@@ -301,9 +297,7 @@ function detectWinConditions(picks: Hero[], physStack: number): WinConditionResu
   }
 
   // LATEGAME — scaling carries + protection
-  const scalingCount = picks.filter(h => h.utilityTags.includes('scaling')).length;
-  const hasSave = picks.some(h => h.utilityTags.includes('save'));
-  const lgStr = Math.min(10, scalingCount * 3 + (hasSave ? 2 : 0));
+  const lgStr = caps.scaling.score;
   if (lgStr >= 5) {
     results.push({
       id: 'lategame', label: 'Late Game', strength: lgStr,
@@ -312,7 +306,10 @@ function detectWinConditions(picks: Hero[], physStack: number): WinConditionResu
     });
   }
 
-  // SPLITPUSH — tower damage + mobility but low teamfight
+  // SPLITPUSH — tower damage + mobility but low teamfight (identity check)
+  const towerCount = picks.filter(h => h.utilityTags.includes('tower_damage')).length;
+  const mobCount = picks.filter(h => h.utilityTags.includes('mobility')).length;
+  const initCount = picks.filter(h => h.utilityTags.includes('initiation')).length;
   if (towerCount >= 2 && mobCount >= 2 && initCount <= 1) {
     const spStr = Math.min(10, towerCount * 3 + mobCount * 2);
     if (spStr >= 6) {
@@ -1652,8 +1649,12 @@ export function analyzeTeam(
   }));
   const flexPicks = myPicks.filter(h => h.flexRoles && h.flexRoles.length > 1).map(h => h.id);
 
-  // Win conditions
-  const winConditions = detectWinConditions(myPicks, physicalStackScore);
+  // Capability profile — single source of truth for win conditions + the radar.
+  const capabilities = computeTeamCapabilities(myPicks, physicalStackScore);
+  const traits = computeTeamTraits(myPicks);
+
+  // Win conditions (a named summary of the capability profile)
+  const winConditions = detectWinConditions(myPicks, physicalStackScore, capabilities);
   const powerWindow = computePowerWindow(myPicks);
   const laneVerdict = computeLaneVerdict(myPicks, roleAssignments);
   const { rating, label: ratingLabel } = computeVerdict(myPicks, winConditions, laneVerdict);
@@ -1703,8 +1704,9 @@ export function analyzeTeam(
     draftHealth,
     gamePlanTimeline,
     heroFreedom,
+    capabilities,
+    traits,
     recommendedPicks: rankPicks(myPickIds, enemyPickIds, availableHeroIds, myPicks, missingUtility, laneVerdict, roleAssignments, heroPool, pickContext),
-    recommendedBans: rankBans(myPickIds, enemyPickIds, availableHeroIds, myPicks, primaryWinCondition, heroPool),
   };
 }
 
@@ -1737,6 +1739,14 @@ function rankPicks(
   const currentOptionSets = currentPicks.map(h => roleOptions(h, assignments));
   const baseCovered = coveredRoles(currentOptionSets);
   const stillOpen = ROLE_LIST.filter(r => !baseCovered.has(r));
+
+  // Capability-aware suggestions: fill the comp's gaps, extend its leads, and keep
+  // the damage/space mix sane. Needs a partial comp (≥2 picks) to be meaningful.
+  const capActive = currentPicks.length >= 2;
+  const myCaps = capActive ? computeTeamCapabilities(currentPicks, computePhysicalStack(currentPicks)) : null;
+  const myTraits = capActive ? computeTeamTraits(currentPicks) : null;
+  const gapAxes = myCaps ? CAPABILITY_ORDER.filter(id => myCaps[id].score <= 3) : [];
+  const leadAxes = myCaps ? CAPABILITY_ORDER.filter(id => myCaps[id].score >= 7) : [];
 
   return available.map(hero => {
     let score = 0;
@@ -1807,6 +1817,50 @@ function rankPicks(
       tag = 'safe lane';
     }
 
+    // Capability-aware: fill gaps, extend leads, balance damage, create space. The
+    // single most salient insight is surfaced as a prominent reason (capReason).
+    let capReason: string | undefined;
+    if (myCaps && myTraits) {
+      const cand = computeTeamCapabilities([...currentPicks, hero], computePhysicalStack([...currentPicks, hero]));
+
+      // 1) Fill the biggest capability gap (largest improvement on a weak axis).
+      let bestGap: { id: CapabilityAxisId; delta: number } | null = null;
+      for (const id of gapAxes) {
+        const delta = cand[id].score - myCaps[id].score;
+        if (delta > 0 && (!bestGap || delta > bestGap.delta)) bestGap = { id, delta };
+      }
+      if (bestGap) {
+        score += Math.min(bestGap.delta, 4) + 1;
+        capReason = `Fills your ${CAPABILITY_LABELS[bestGap.id].toLowerCase()} gap`;
+        tag = tag ?? 'fills gap';
+      }
+
+      // 2) Create space for a greedy comp (or discourage another farmer).
+      const greedy = myTraits.space.rating === 'no_space' || myTraits.space.rating === 'user_heavy';
+      const space = spaceRoleOf(hero);
+      if (greedy && space === 'provider') {
+        score += 3; capReason = capReason ?? 'Creates space for your farming cores'; tag = tag ?? 'creates space';
+      } else if (greedy && space === 'user') score -= 3;
+
+      // 3) Balance a lopsided damage profile (easy to itemize against otherwise).
+      const dt = damageTypeOf(hero);
+      if (myTraits.damage.dominant === 'physical' && (dt === 'magical' || dt === 'pure')) {
+        score += 3; capReason = capReason ?? 'Adds magical damage — your lineup is mostly physical';
+      } else if (myTraits.damage.dominant === 'magical' && dt === 'physical') {
+        score += 3; capReason = capReason ?? 'Adds physical damage — your lineup is mostly magical';
+      }
+
+      // 4) Otherwise, extend an existing strength.
+      if (!bestGap) {
+        let bestLead: { id: CapabilityAxisId; delta: number } | null = null;
+        for (const id of leadAxes) {
+          const delta = cand[id].score - myCaps[id].score;
+          if (delta > 0 && (!bestLead || delta > bestLead.delta)) bestLead = { id, delta };
+        }
+        if (bestLead) { score += 2; capReason = capReason ?? `Doubles down on your ${CAPABILITY_LABELS[bestLead.id].toLowerCase()} lead`; }
+      }
+    }
+
     // Draft-position timing — counterable heroes want a protected (late) slot.
     let timing: PickTiming | undefined;
     if (pickContext) {
@@ -1832,56 +1886,12 @@ function rankPicks(
       } else timing = 'safe_now';
     }
 
-    return { heroId: hero.id, score, reasons: [...new Set(reasons)].slice(0, 3), tag, timing };
-  })
-    .filter(r => r.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
-}
-
-function rankBans(
-  myIds: number[], enemyIds: number[], availableIds: number[],
-  myPicks: Hero[], primaryWinCon: WinConditionResult, heroPool: Hero[],
-): HeroRecommendation[] {
-  const available = availableIds.map(id => heroPool.find(h => h.id === id)).filter(Boolean) as Hero[];
-  const myMid = myPicks.find(h => h.preferredRoles.includes('mid') || h.metaRole === 'pos2');
-  const physStack = computePhysicalStack(myPicks);
-
-  return available.map(hero => {
-    let score = 0;
-    const reasons: string[] = [];
-
-    const cntReasons = getCounterReasons(hero.id, myIds);
-    if (cntReasons.length > 0) { score += cntReasons.length * 5; reasons.push(`Counters your lineup: ${cntReasons[0]}`); }
-
-    const synReasons = getSynergyReasons(hero.id, enemyIds);
-    if (synReasons.length > 0) { score += synReasons.length * 3; reasons.push(`Fits enemy draft: ${synReasons[0]}`); }
-
-    if (myMid) {
-      const adv = matchupAdvantage(hero.id, myMid.id);
-      if (adv >= 2) {
-        score += adv * 3;
-        reasons.push(getMidMatchupNote(hero.id, myMid.id) ?? `Beats your mid ${myMid.displayName}`);
-      }
-    }
-
-    // Counters our specific win condition
-    if (primaryWinCon.id === 'lategame' && hero.name === 'ancient_apparition') {
-      score += 8; reasons.push('Ice Blast counters all healing/sustain carries — priority ban');
-    }
-    if ((primaryWinCon.id === 'teamfight') && hero.name === 'silencer') {
-      score += 8; reasons.push('Global Silence cancels your entire combo window');
-    }
-    if ((primaryWinCon.id === 'physical_domination') && physStack >= 2 &&
-        ['elder_titan', 'slardar', 'dazzle'].includes(hero.name)) {
-      score += 6; reasons.push('Armor reduction/save negates your physical damage stack');
-    }
-
-    if (hero.complexity === 3 && hero.utilityTags.includes('initiation')) {
-      score += 3; reasons.push('High-impact initiator that changes teamfights');
-    }
-
-    return { heroId: hero.id, score, reasons: [...new Set(reasons)].slice(0, 3) };
+    // Surface the capability insight prominently (right after the top reason).
+    const base = [...new Set(reasons)];
+    const finalReasons = (capReason
+      ? [...new Set([base[0], capReason, ...base.slice(1)].filter(Boolean))]
+      : base) as string[];
+    return { heroId: hero.id, score, reasons: finalReasons.slice(0, 3), tag, timing };
   })
     .filter(r => r.score > 0)
     .sort((a, b) => b.score - a.score)
