@@ -3,7 +3,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const router = Router();
-const DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
+// process.cwd()-relative (not __dirname-relative): __dirname's depth relative to
+// backend/data differs between ts-node dev (backend/src/routes) and the compiled
+// build (backend/dist/backend/src/routes, since tsconfig's rootDir spans ../shared
+// too). npm scripts always run with cwd = backend/, so this resolves correctly in
+// both modes.
+const DATA_DIR = path.resolve(process.cwd(), 'data');
 
 // Prefer the pairwise model (best AUC); fall back to hero-only.
 const CANDIDATES = ['model_opendota_pro_pairs.json', 'model_opendota_pro.json'];

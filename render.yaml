@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: dota-draft-analyzer-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: CORS_ORIGIN
+        sync: false # set manually once the frontend URL is known, e.g. https://your-app.vercel.app

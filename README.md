@@ -43,6 +43,15 @@ cd backend  && npx tsc --noEmit
 The matcher tests double as living documentation of the counter-item rules
 (Silver Edge breaks passives, MKB pierces evasion, Eul's interrupts charges, …).
 
+## Deployment
+
+The backend is stateless at runtime (the SQLite corpus is only used by the
+offline ingest/train/backtest scripts), so deployment is a static frontend
+host (Vercel) + one small always-on Node service (Render). Both the API base
+URL (`VITE_API_BASE`) and the CORS allowlist (`CORS_ORIGIN`) are
+environment-configurable and default to the local dev setup when unset. See
+[DEPLOY.md](./DEPLOY.md) for the full step-by-step runbook.
+
 ---
 
 ## Feature Changelog
@@ -315,6 +324,13 @@ A structured "what each comp can and can't do" layer, built in four phases.
 - **UI (`CapabilityPanel`)** — a pure-SVG **dual-overlay radar** (your team vs. the enemy), a per-team **Can / Can't** summary, and damage-mix bars, in the post-draft report.
 - **Suggestions** — `rankPicks` now reasons about the profile: it rewards picks that **fill a capability gap**, **create space** for greedy comps, **balance lopsided damage**, or **extend an existing lead**, surfacing the insight as a suggestion reason (e.g. *"Fills your teamfight gap"*, *"Adds magical damage — your lineup is mostly physical"*).
 - **Validation** — backtested the capability + trait features through the same 5-fold CV harness: **no AUC lift** over the 0.577 baseline (A 0.5768 → +caps 0.5721; standalone 0.521). Like the rest of the coaching brain, it's an **explanatory / decision-support** layer, not a win-probability lever.
+
+### Session 24 — Deployment readiness
+Made the app deployable (`render.yaml`, `frontend/vercel.json`, `DEPLOY.md`) and along the way caught two bugs that only manifest in a production build, never in dev:
+- **`npm start` pointed at the wrong compiled entry point.** Because the backend's `tsconfig.json` sets `rootDir` to the repo root (needed so `../shared` compiles alongside `backend/src`), `tsc` mirrors that path under `dist/` — the real entry is `dist/backend/src/index.js`, not `dist/index.js`. `ts-node-dev` (used in `npm run dev`) never hits this, since it runs the `.ts` source directly, so the bug was invisible until a real production build was run. Fixed the `start` script to point at the correct path.
+- **The trained-model route resolved its data directory incorrectly under a compiled build**, for the same reason — `__dirname`-relative traversal in `routes/model.ts` assumed a shallower nesting than the compiled output actually has. Switched to a `process.cwd()`-relative path (both `npm run dev` and `npm start` are invoked with `cwd` = `backend/`, so this holds in both modes).
+- **CORS origin is now environment-configurable** (`CORS_ORIGIN`, comma-separated, defaults to the local Vite dev server) instead of hardcoded to `localhost:5173`.
+- Verified by building and running the compiled server exactly as the host would (`npm run build && PORT=… CORS_ORIGIN=… node dist/backend/src/index.js`): health check, the model endpoint, and a CORS preflight all confirmed working — including that a non-allowlisted origin is correctly rejected. All 75 tests and both type-checks stayed green; local dev is unaffected since both env vars default to the existing localhost setup.
 
 ---
 

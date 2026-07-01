@@ -9,7 +9,12 @@ import itemsRouter from './routes/items';
 export const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors({ origin: 'http://localhost:5173' }));
+// Comma-separated list of allowed frontend origins (e.g. the deployed Vercel URL).
+// Falls back to the local Vite dev server when unset.
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN ?? 'http://localhost:5173')
+  .split(',').map(o => o.trim()).filter(Boolean);
+
+app.use(cors({ origin: ALLOWED_ORIGINS }));
 app.use(express.json());
 
 app.use('/api/heroes', heroesRouter);
