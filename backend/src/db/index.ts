@@ -136,3 +136,25 @@ export function loadMatchesForBacktest(source?: string): {
     };
   });
 }
+
+export interface DraftEvent { hero_id: number; team: 'radiant' | 'dire'; is_pick: number; ord: number }
+
+/** Pro matches with their full ordered picks_bans sequence (real Captains Mode
+ *  order) — used to replay historical draft states for recommendation backtesting.
+ *  Only matches with a fully-populated `ord` column qualify (pub matches have
+ *  ord=NULL since publicMatches carries no picks_bans). */
+export function loadOrderedDraftsForBacktest(source = 'opendota_pro'): {
+  match_id: number; radiant_win: number; events: DraftEvent[];
+}[] {
+  const matches = db.prepare(
+    'SELECT match_id, radiant_win FROM matches WHERE source = ?',
+  ).all(source) as { match_id: number; radiant_win: number }[];
+
+  const evStmt = db.prepare(
+    'SELECT hero_id, team, is_pick, ord FROM match_heroes WHERE match_id = ? AND ord IS NOT NULL ORDER BY ord ASC',
+  );
+
+  return matches
+    .map(m => ({ match_id: m.match_id, radiant_win: m.radiant_win, events: evStmt.all(m.match_id) as unknown as DraftEvent[] }))
+    .filter(m => m.events.length > 0);
+}

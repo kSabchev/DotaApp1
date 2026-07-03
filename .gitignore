@@ -53,5 +53,7 @@ coverage/
 # Misc
 *.tgz
 *.zip
+*.docx
 
 /docs/shots
+*.cjs

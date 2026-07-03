@@ -1625,6 +1625,7 @@ export function analyzeTeam(
   heroPool: Hero[] = LOCAL_HEROES,
   roleAssignments: Record<number, Role> = {},
   pickContext: PickContext | null = null,
+  ablate: RankPicksAblation = {},
 ): TeamAnalysis {
   const myPicks = myPickIds.map(id => heroPool.find(h => h.id === id)!).filter(Boolean);
   const enemyPicks = enemyPickIds.map(id => heroPool.find(h => h.id === id)!).filter(Boolean);
@@ -1706,7 +1707,7 @@ export function analyzeTeam(
     heroFreedom,
     capabilities,
     traits,
-    recommendedPicks: rankPicks(myPickIds, enemyPickIds, availableHeroIds, myPicks, missingUtility, laneVerdict, roleAssignments, heroPool, pickContext),
+    recommendedPicks: rankPicks(myPickIds, enemyPickIds, availableHeroIds, myPicks, missingUtility, laneVerdict, roleAssignments, heroPool, pickContext, ablate),
   };
 }
 
@@ -1723,11 +1724,24 @@ function synergyTypeLabel(type: import('./types').SynergyType): string {
 
 // ─── Recommendation engines ───────────────────────────────────────────────────
 
+// Ablation flags for the recommendation-agreement backtest (Section 7 evaluation):
+// disabling a module drops its scoring contribution and reasons, isolating each
+// signal's effect on Top-N agreement with historical picks. Undefined/all-false
+// reproduces production behavior exactly (verified against the existing suite).
+export interface RankPicksAblation {
+  synergy?: boolean;      // ally-fit: synergy pairs + lane partner
+  counter?: boolean;      // enemy-fit: counter score + mid matchup
+  roleCoverage?: boolean; // composition-fit: role coverage + safe lane needs + missing utility
+  capability?: boolean;   // capability-profile gap-fill / space / damage-balance / lead-extend
+  timing?: boolean;       // draft-position timing / fragility ("exposure")
+}
+
 function rankPicks(
   myIds: number[], enemyIds: number[], availableIds: number[],
   currentPicks: Hero[], missingUtility: UtilityTag[],
   laneVerdict: LaneVerdictResult, assignments: Record<number, Role>,
   heroPool: Hero[], pickContext: PickContext | null = null,
+  ablate: RankPicksAblation = {},
 ): HeroRecommendation[] {
   const available = availableIds.map(id => heroPool.find(h => h.id === id)).filter(Boolean) as Hero[];
   const hasMid = currentPicks.some(h => effectiveRole(h, assignments) === 'mid');
@@ -1754,15 +1768,19 @@ function rankPicks(
     let tag: string | undefined;
 
     // Synergy
-    const synReasons = getSynergyReasons(hero.id, myIds);
-    if (synReasons.length > 0) { score += synReasons.length * 3; reasons.push(...synReasons.slice(0, 1)); }
+    if (!ablate.synergy) {
+      const synReasons = getSynergyReasons(hero.id, myIds);
+      if (synReasons.length > 0) { score += synReasons.length * 3; reasons.push(...synReasons.slice(0, 1)); }
+    }
 
     // Counter
-    const cntReasons = getCounterReasons(hero.id, enemyIds);
-    if (cntReasons.length > 0) { score += cntReasons.length * 4; reasons.push(...cntReasons.slice(0, 1)); }
+    if (!ablate.counter) {
+      const cntReasons = getCounterReasons(hero.id, enemyIds);
+      if (cntReasons.length > 0) { score += cntReasons.length * 4; reasons.push(...cntReasons.slice(0, 1)); }
+    }
 
     // Mid matchup
-    if (!hasMid && (hero.preferredRoles.includes('mid') || hero.metaRole === 'pos2')) {
+    if (!ablate.counter && !hasMid && (hero.preferredRoles.includes('mid') || hero.metaRole === 'pos2')) {
       for (const em of enemyMids) {
         const adv = matchupAdvantage(hero.id, em.id);
         if (adv >= 2) {
@@ -1774,22 +1792,26 @@ function rankPicks(
     }
 
     // Lane partner
-    for (const allyId of myIds) {
-      const lp = getLanePartnerScore(hero.id, allyId);
-      if (lp >= 7) {
-        score += lp;
-        const ally = heroPool.find(h => h.id === allyId);
-        if (ally) reasons.push(`Strong lane partner with ${ally.displayName}`);
+    if (!ablate.synergy) {
+      for (const allyId of myIds) {
+        const lp = getLanePartnerScore(hero.id, allyId);
+        if (lp >= 7) {
+          score += lp;
+          const ally = heroPool.find(h => h.id === allyId);
+          if (ally) reasons.push(`Strong lane partner with ${ally.displayName}`);
+        }
       }
     }
 
     // Missing utility
-    for (const tag2 of missingUtility) {
-      if (hero.utilityTags.includes(tag2)) { score += 5; reasons.push(`Adds ${tag2.replace('_', ' ')}`); break; }
+    if (!ablate.roleCoverage) {
+      for (const tag2 of missingUtility) {
+        if (hero.utilityTags.includes(tag2)) { score += 5; reasons.push(`Adds ${tag2.replace('_', ' ')}`); break; }
+      }
     }
 
     // Role coverage — does this pick fill a still-open role, and does it keep flex?
-    if (stillOpen.length > 0) {
+    if (!ablate.roleCoverage && stillOpen.length > 0) {
       const candOptions = roleOptions(hero, {});
       const withCand = coveredRoles([...currentOptionSets, candOptions]);
       const fillsGap = withCand.size > baseCovered.size;
@@ -1810,7 +1832,7 @@ function rankPicks(
     }
 
     // Safe lane needs
-    if (laneVerdict.safeLane.needs.length > 0 &&
+    if (!ablate.roleCoverage && laneVerdict.safeLane.needs.length > 0 &&
         (hero.utilityTags.includes('save') || hero.utilityTags.includes('heal'))) {
       score += 6;
       reasons.push('Provides save/sustain for safe lane carry');
@@ -1820,7 +1842,7 @@ function rankPicks(
     // Capability-aware: fill gaps, extend leads, balance damage, create space. The
     // single most salient insight is surfaced as a prominent reason (capReason).
     let capReason: string | undefined;
-    if (myCaps && myTraits) {
+    if (!ablate.capability && myCaps && myTraits) {
       const cand = computeTeamCapabilities([...currentPicks, hero], computePhysicalStack([...currentPicks, hero]));
 
       // 1) Fill the biggest capability gap (largest improvement on a weak axis).
@@ -1863,7 +1885,7 @@ function rankPicks(
 
     // Draft-position timing — counterable heroes want a protected (late) slot.
     let timing: PickTiming | undefined;
-    if (pickContext) {
+    if (!ablate.timing && pickContext) {
       const frag = getHeroFragility(hero);
       if (pickContext.enemyPicksAfter === 0) {
         // Protected slot: the enemy can no longer respond — commit counterable heroes here.
