@@ -128,7 +128,12 @@ function TeamHighlights({ profile, traits, color, label }: { profile: Capability
         {cant.length ? cant.map(a => a.label).join(', ') : <span className="text-gray-600">no major gaps</span>}
       </div>
       <DamageBar traits={traits} />
-      <p className="text-[9px] text-gray-500 leading-tight mt-1">{traits.space.note}</p>
+      <p className="text-[9px] text-gray-500 leading-tight mt-1">
+        {traits.space.note}
+        {(traits.space.rating === 'user_heavy' || traits.space.rating === 'no_space') && (
+          <span className="text-gray-600"> Who and how: Team Identity below.</span>
+        )}
+      </p>
       {traits.roshanNote && <p className="text-[9px] text-amber-500/80 leading-tight mt-0.5">🛡 {traits.roshanNote}</p>}
     </div>
   );

@@ -42,3 +42,19 @@ test('unknown route returns 404', async () => {
     assert.equal(res.status, 404);
   });
 });
+
+test('GET /api/players/:accountId/matches rejects non-numeric ids', async () => {
+  await withServer(async port => {
+    const res = await get(port, '/api/players/abc/matches');
+    assert.equal(res.status, 400);
+    assert.match(JSON.parse(res.body).error, /account id/i);
+  });
+});
+
+test('GET /api/heroes/:id/pros rejects non-numeric ids', async () => {
+  await withServer(async port => {
+    const res = await get(port, '/api/heroes/xyz/pros');
+    assert.equal(res.status, 400);
+    assert.match(JSON.parse(res.body).error, /hero id/i);
+  });
+});

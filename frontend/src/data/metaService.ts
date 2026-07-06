@@ -105,6 +105,25 @@ export async function loadMeta(): Promise<void> {
   }
 }
 
+// Boost added to pick suggestions for in-meta heroes — the pick-side counterpart
+// of metaBanBoost. Graded continuously by relative pick rate (pros weigh the
+// current meta heavily; the Section 7.5 evaluation measured what happens when
+// this signal is absent). Note only above 50% so reasons stay high-signal.
+export function metaPickBoost(heroId: number): { boost: number; note?: string } {
+  const meta = metaMap.get(heroId);
+  if (!meta) return { boost: 0 };
+  const boost = Math.round(15 * meta.highPickRate) + (meta.tier === 'S' ? 3 : 0);
+  if (boost <= 0) return { boost: 0 };
+  const pr = Math.round(meta.highPickRate * 100);
+  const wr = Math.round(meta.highWinRate * 100);
+  const note = meta.highPickRate >= 0.5
+    ? (meta.tier === 'S'
+      ? `S-tier meta pick — ${wr}% win rate, ${pr}% relative pick rate`
+      : `Meta staple — ${pr}% relative pick rate in Immortal bracket`)
+    : undefined;
+  return { boost, note };
+}
+
 // Boost added to ban threat ranking for top-meta heroes
 export function metaBanBoost(heroId: number): { boost: number; note: string | undefined } {
   const meta = metaMap.get(heroId);

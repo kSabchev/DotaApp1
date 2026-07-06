@@ -17,6 +17,7 @@ import MatchupGradesPanel from './MatchupGradesPanel';
 import HeroBuildPanel from './HeroBuildPanel';
 import DraftHealthPanel from './DraftHealthPanel';
 import GamePlanTimelinePanel from './GamePlanTimelinePanel';
+import TeamIdentityPanel from './TeamIdentityPanel';
 import HeroFreedomPanel from './HeroFreedomPanel';
 import CapabilityPanel from './CapabilityPanel';
 import RolePicker from './RolePicker';
@@ -194,6 +195,9 @@ export default function DraftSummary() {
                 </div>
               )}
               <DraftVerdictCard verdict={analysis.draftVerdict} />
+
+              {/* Team identity — the cast, and whether the playstyles align (beta) */}
+              <TeamIdentityPanel identity={analysis.identity} />
 
               {/* Minute-by-minute execution plan */}
               <GamePlanTimelinePanel timeline={analysis.gamePlanTimeline} />

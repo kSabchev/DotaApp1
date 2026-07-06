@@ -41,6 +41,8 @@ export interface MatchPlayer {
   hero_id: number;
   personaname: string | null;
   team_number: 0 | 1;
+  player_slot?: number;   // <128 = radiant, >=128 = dire
+  isRadiant?: boolean;
   kills: number;
   deaths: number;
   assists: number;

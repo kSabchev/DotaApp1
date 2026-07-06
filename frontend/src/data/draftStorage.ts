@@ -1,19 +1,10 @@
-import type { DraftSlot, Role } from '../types';
+// localStorage persistence for saved drafts. The SavedDraft type moved to the
+// shared core (shared/types.ts) so showcase drafts and future server-side
+// persistence use the same shape; re-exported here so existing imports keep
+// working unchanged.
+import type { SavedDraft } from '../types';
 
-export type DraftOutcome = 'radiant_win' | 'dire_win' | 'unknown';
-
-export interface SavedDraft {
-  id: string;
-  name: string;
-  notes: string;
-  outcome: DraftOutcome;
-  savedAt: number;
-  // Snapshot of the slot array (preserves pick/ban order and team)
-  slots: DraftSlot[];
-  mode: 'captains' | 'manual';
-  startingTeam: 'radiant' | 'dire';
-  roleAssignments: Record<number, Role>;
-}
+export type { SavedDraft, DraftOutcome } from '../types';
 
 const STORAGE_KEY = 'dota2_draft_history';
 

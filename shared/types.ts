@@ -137,6 +137,53 @@ export interface TeamTraits {
   roshanNote: string;
 }
 
+// ─── Hero playstyles & team identity (beta) ───────────────────────────────────
+// How a hero actually wants to play the game — used to check whether the five
+// picks form a coherent "cast" (who fights, who farms, who makes space).
+
+export type Playstyle =
+  | 'constant_fighter'   // skirmishes from level 1 on short cooldowns
+  | 'cooldown_fighter'   // fights around a big ult window (Magnus, Enigma, Void)
+  | 'split_map_farmer'   // lives on the other side of the map (Spectre, AM, NP)
+  | 'greedy_farmer'      // needs farm + protection before contributing
+  | 'initiator'          // starts the fight
+  | 'frontline'          // absorbs damage at the front
+  | 'backline'           // delivers from range, must be protected
+  | 'roamer'             // support that leaves lane to make plays
+  | 'tempo_controller'   // dictates mid-game pace off early item/level spikes
+  | 'global_presence';   // cross-map pressure via global spells/TP plays
+
+export type IdentityNoteKind =
+  | 'fighting_rhythm'    // constant vs cooldown fighting mix
+  | 'map_presence'       // split-map / global heroes
+  | 'initiation'         // is there someone to start fights?
+  | 'line_balance'       // frontline vs backline
+  | 'greed'              // too many farm-dependent heroes
+  | 'support_mobility';  // do the supports move around the map?
+
+export type IdentitySeverity = 'good' | 'info' | 'warning';
+
+export interface TeamIdentityMember {
+  heroId: number;
+  displayName: string;
+  playstyles: Playstyle[];
+}
+
+export interface TeamIdentityNote {
+  kind: IdentityNoteKind;
+  severity: IdentitySeverity;
+  headline: string;   // "No initiator", "Draft too greedy"
+  detail: string;     // full sentence naming the heroes involved
+  heroIds: number[];
+}
+
+export interface TeamIdentity {
+  members: TeamIdentityMember[];
+  counts: Partial<Record<Playstyle, number>>;
+  notes: TeamIdentityNote[];  // warnings first, then info, then good
+  summary: string;            // 1–2 sentence cast narrative
+}
+
 // ─── Lane analysis ───────────────────────────────────────────────────────────
 
 export interface LaneSummary {
@@ -299,6 +346,23 @@ export interface DraftSlot {
   heroId: number | null;
 }
 
+// A complete, loadable draft snapshot. Lives in shared/ so showcase drafts and
+// (later) server-side persistence use the exact shape the frontend stores.
+export type DraftOutcome = 'radiant_win' | 'dire_win' | 'unknown';
+
+export interface SavedDraft {
+  id: string;
+  name: string;
+  notes: string;
+  outcome: DraftOutcome;
+  savedAt: number;
+  // Snapshot of the slot array (preserves pick/ban order and team)
+  slots: DraftSlot[];
+  mode: 'captains' | 'manual';
+  startingTeam: DraftTeam;
+  roleAssignments: Record<number, Role>;
+}
+
 export interface LaneMatchupResult {
   heroId: number;
   enemyHeroId: number;
@@ -359,6 +423,7 @@ export interface TeamAnalysis {
   heroFreedom: HeroFreedom[];
   capabilities: CapabilityProfile;
   traits: TeamTraits;
+  identity: TeamIdentity;
 
   // Recommendations
   recommendedPicks: HeroRecommendation[];

@@ -21,6 +21,12 @@ export function getMatchupsVersion(): number {
   return version;
 }
 
+// Other live-data sources (e.g. meta stats) can bump the version so analyses
+// that depend on it recompute on the next render tick.
+export function bumpMatchupsVersion(): void {
+  version++;
+}
+
 function toAdvantage(winRate: number): number {
   // wr 0.60 → +5, wr 0.55 → +2.5, wr 0.50 → 0, wr 0.45 → -2.5, wr 0.40 → -5
   const delta = (winRate - 0.5) * 100; // -50 to +50 percentage points
@@ -57,6 +63,14 @@ export function primeMatchups(heroIds: number[]): void {
 // Falls back to 0 if data isn't loaded yet.
 export function getApiMatchupAdvantage(heroId: number, enemyId: number): number {
   return cache.get(heroId)?.get(enemyId) ?? 0;
+}
+
+// Read-only view of a hero's loaded matchup rows (hero encyclopedia).
+// null while the data hasn't arrived yet — callers show a loading state.
+export function getMatchupRowsFor(heroId: number): { enemyId: number; advantage: number }[] | null {
+  const map = cache.get(heroId);
+  if (!map) return null;
+  return [...map.entries()].map(([enemyId, advantage]) => ({ enemyId, advantage }));
 }
 
 // Returns the top N most dangerous available heroes against myPickIds,

@@ -63,10 +63,35 @@ test('every interaction resolves to valid hero ids (no unknown short-names, no s
   // importing INTERACTIONS already guards against typos. These assertions make that
   // guarantee explicit and also catch self-referential entries.
   const validIds = new Set(Object.values(HERO_IDS));
-  assert.ok(INTERACTIONS.length > 200, 'expected a substantial interaction table');
+  assert.ok(INTERACTIONS.length >= 400, `expected >= 400 interactions, got ${INTERACTIONS.length}`);
   for (const ix of INTERACTIONS) {
     assert.ok(validIds.has(ix.heroId), `interaction heroId ${ix.heroId} not in HERO_IDS`);
     assert.ok(validIds.has(ix.targetHeroId), `interaction targetHeroId ${ix.targetHeroId} not in HERO_IDS`);
     assert.notEqual(ix.heroId, ix.targetHeroId, `self-referential interaction: ${ix.reason}`);
+  }
+});
+
+test('interaction scores are within range and reasons are non-empty', () => {
+  for (const ix of INTERACTIONS) {
+    assert.ok(ix.reason.trim().length > 0, `empty reason for ${ix.heroId}->${ix.targetHeroId}`);
+    if (ix.synergyScore !== undefined) assert.ok(ix.synergyScore >= 0 && ix.synergyScore <= 10, `synergyScore out of range: ${ix.reason}`);
+    if (ix.counterScore !== undefined) assert.ok(ix.counterScore >= 0 && ix.counterScore <= 10, `counterScore out of range: ${ix.reason}`);
+    if (ix.laneMatchupScore !== undefined) assert.ok(ix.laneMatchupScore >= -5 && ix.laneMatchupScore <= 5, `laneMatchupScore out of range: ${ix.reason}`);
+    if (ix.lanePartnerScore !== undefined) assert.ok(ix.lanePartnerScore >= 0 && ix.lanePartnerScore <= 10, `lanePartnerScore out of range: ${ix.reason}`);
+  }
+});
+
+test('no duplicate same-field entries per hero pair (first match would silently shadow the rest)', () => {
+  const seen = new Map<string, Set<string>>();
+  const FIELDS = ['synergyScore', 'counterScore', 'laneMatchupScore', 'lanePartnerScore'] as const;
+  for (const ix of INTERACTIONS) {
+    const key = `${ix.heroId}->${ix.targetHeroId}`;
+    const prev = seen.get(key) ?? new Set<string>();
+    for (const f of FIELDS) {
+      if ((ix as Record<string, unknown>)[f] === undefined) continue;
+      assert.ok(!prev.has(f), `duplicate ${f} for pair ${key}: "${ix.reason}"`);
+      prev.add(f);
+    }
+    seen.set(key, prev);
   }
 });

@@ -11,6 +11,7 @@ import LanePredictionsPanel from './LanePredictionsPanel';
 import BanThreatsPanel from './BanThreatsPanel';
 import MatchupItemPanel from './MatchupItemPanel';
 import MatchupGradesPanel from './MatchupGradesPanel';
+import TeamIdentityPanel from './TeamIdentityPanel';
 import Section from './Section';
 import { ROLE_LABEL } from './RolePicker';
 import type { Role } from '../types';
@@ -72,6 +73,8 @@ export default function AnalysisPanel({ team }: Props) {
     ),
 
     draftVerdict: hasPicks ? <DraftVerdictCard verdict={analysis.draftVerdict} /> : null,
+
+    teamIdentity: myPicks.length >= 2 ? <TeamIdentityPanel identity={analysis.identity} /> : null,
 
     itemsToBuild: hasPicks ? <MatchupItemPanel myPicks={myHeroes} enemyPicks={enemyHeroes} /> : null,
 
@@ -278,7 +281,7 @@ export default function AnalysisPanel({ team }: Props) {
 
   // ── Ordering: suggestions lead; on a ban turn, ban threats lead ───────────────
   const base = [
-    'threatsToBan', 'draftVerdict', 'itemsToBuild', 'matchupGrades', 'lanePredictions',
+    'threatsToBan', 'draftVerdict', 'teamIdentity', 'itemsToBuild', 'matchupGrades', 'lanePredictions',
     'scoreBreakdown', 'comboSynergies', 'physicalStack', 'midMatchup', 'laneMatchups',
     'strengths', 'weaknesses', 'teamProfile', 'missingUtility', 'suggestedPicks',
   ];

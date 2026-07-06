@@ -71,3 +71,63 @@ test('threats list is symmetric (enemy answers to my heroes)', () => {
   // they should be advised MKB vs our PA's evasion
   assert.ok(threats.some(r => r.itemName === 'Monkey King Bar'), 'enemy should consider MKB vs our PA');
 });
+
+// ── Per-hero inverse lookup + stacked-threat escalation ───────────────────────
+import { itemsThatCounter } from '../../shared/matchups';
+
+test('itemsThatCounter lists break items for passive-reliant heroes', () => {
+  for (const name of ['bristleback', 'spectre', 'tidehunter']) {
+    const counters = itemsThatCounter(hero(name, 99, 'offlane', name));
+    const breakItem = counters.find(c => c.mechanic === 'break');
+    assert.ok(breakItem, `expected a break item vs ${name}`);
+    assert.equal(breakItem!.priority, 'core');
+    assert.match(breakItem!.reason, /passive/i);
+  }
+});
+
+test('itemsThatCounter lists detection vs invis heroes and true strike vs evasion', () => {
+  const vsRiki = itemsThatCounter(hero('riki', 32, 'support', 'Riki'));
+  assert.ok(vsRiki.some(c => c.mechanic === 'detection'));
+  const vsPa = itemsThatCounter(hero('phantom_assassin', 44, 'carry', 'Phantom Assassin'));
+  assert.ok(vsPa.some(c => c.mechanic === 'true_strike'));
+});
+
+test('itemsThatCounter returns empty for heroes without a mechanic profile', () => {
+  const counters = itemsThatCounter(hero('largo', 155, 'carry', 'Largo'));
+  assert.ok(Array.isArray(counters));
+});
+
+test('two invis heroes escalate detection to core with a stacked note', () => {
+  const me = [hero('tidehunter', 1, 'offlane')];
+  const enemy = [hero('riki', 2, 'support', 'Riki'), hero('clinkz', 3, 'carry', 'Clinkz')];
+  const { recommended } = computeItemMatchups(me, enemy);
+  const detection = recommended.find(r => r.answers.some(a => a.mechanic === 'detection'));
+  assert.ok(detection, 'expected a detection recommendation');
+  assert.equal(detection!.priority, 'core');
+  assert.ok(detection!.stackedNote, 'expected a stacked note');
+  assert.match(detection!.stackedNote!, /invis/i);
+});
+
+test('three heavy magic dealers escalate the magic barrier item with a stacked note', () => {
+  const me = [hero('axe', 1, 'offlane'), hero('dazzle', 2, 'hard_support')];
+  const enemy = [
+    hero('zuus', 3, 'mid', 'Zeus'),
+    hero('lina', 4, 'mid', 'Lina'),
+    hero('lion', 5, 'support', 'Lion'),
+  ];
+  const { recommended } = computeItemMatchups(me, enemy);
+  const barrier = recommended.find(r => r.answers.some(a => a.mechanic === 'magic_barrier'));
+  assert.ok(barrier, 'expected a magic barrier recommendation');
+  assert.equal(barrier!.priority, 'core');
+  assert.ok(barrier!.stackedNote, 'expected a stacked note');
+  assert.match(barrier!.stackedNote!, /magic/i);
+});
+
+test('a single invis hero does not produce a stacked note', () => {
+  const me = [hero('tidehunter', 1, 'offlane')];
+  const enemy = [hero('riki', 2, 'support', 'Riki')];
+  const { recommended } = computeItemMatchups(me, enemy);
+  const detection = recommended.find(r => r.answers.some(a => a.mechanic === 'detection'));
+  assert.ok(detection);
+  assert.equal(detection!.stackedNote, undefined);
+});

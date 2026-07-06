@@ -99,15 +99,22 @@ export function computeTeamTraits(picks: Hero[]): TeamTraits {
   const providerIds = picks.filter(h => SPACE_PROVIDERS.has(h.name)).map(h => h.id);
   let rating: SpaceBalance['rating'];
   let spaceNote: string;
+  // Wording note: this is the ECONOMY view (counts and balance). The word
+  // "greedy" and the who-fights-when narrative belong to Team Identity
+  // (shared/teamIdentity.ts), which reads this rating — keep the two voices
+  // distinct so the panels complement instead of repeating each other.
   if (userIds.length >= 3 && providerIds.length === 0) {
     rating = 'no_space';
-    spaceNote = `${userIds.length} farm-hungry cores but no space-creators — nobody makes room for them to scale.`;
+    spaceNote = `${userIds.length} farm-hungry cores, zero space-creators — nobody makes room for them to scale.`;
   } else if (userIds.length >= 3) {
     rating = 'user_heavy';
-    spaceNote = `Greedy lineup (${userIds.length} space-hungry cores) — needs early tempo to let them come online.`;
+    spaceNote = `${userIds.length} space-hungry cores leaning on ${providerIds.length} space-creator${providerIds.length === 1 ? '' : 's'} — the creators must stay active.`;
   } else if (providerIds.length >= 1 && userIds.length >= 1) {
     rating = 'balanced';
     spaceNote = `Space looks healthy — ${providerIds.length} creator(s) make room for ${userIds.length} farmer(s).`;
+  } else if (userIds.length > 0) {
+    rating = 'neutral';
+    spaceNote = `${userIds.length} farm-dependent core${userIds.length === 1 ? '' : 's'}, no dedicated space-creator — tempo must come from elsewhere.`;
   } else {
     rating = 'neutral';
     spaceNote = 'Flexible / support-heavy — no strong space dynamic either way.';

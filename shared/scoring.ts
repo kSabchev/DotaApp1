@@ -12,6 +12,7 @@ import {
 import { analyzeHeroFreedom, getHeroFragility } from './heroFreedom';
 import { computeTeamCapabilities, CAPABILITY_ORDER, CAPABILITY_LABELS } from './capabilities';
 import { computeTeamTraits, damageTypeOf, spaceRoleOf } from './heroTraits';
+import { computeTeamIdentity } from './teamIdentity';
 
 export type BanThreatUrgency = 'critical' | 'high' | 'medium';
 
@@ -51,6 +52,22 @@ export function setLiveMatchupProvider(fn: MatchupAdvProvider | null): void {
 // True when confident live win-rate data exists for this matchup (drives provenance).
 function hasLiveAdv(a: number, b: number): boolean {
   return !!liveMatchupProvider && liveMatchupProvider(a, b) !== 0;
+}
+
+// ─── Meta popularity (the pick-suggestion counterpart of metaBanBoost) ────────
+//
+// The Section 7.5 evaluation found the engine's Top-3 agreement with professional
+// picks losing to a naive most-picked baseline precisely because rankPicks carried
+// no patch-meta signal while rankBanThreats did. The frontend registers a provider
+// backed by live Immortal-bracket pick rates (metaService); the backtest registers
+// one derived from the corpus's own pick counts — the same counts its most-picked
+// baseline ranks by, keeping the comparison fair. No provider → no meta term.
+export interface MetaPickBoost { boost: number; note?: string }
+type MetaPickProvider = (heroId: number) => MetaPickBoost;
+let metaPickProvider: MetaPickProvider | null = null;
+
+export function setMetaPickProvider(fn: MetaPickProvider | null): void {
+  metaPickProvider = fn;
 }
 
 // Blended head-to-head advantage of `a` vs `b` (−5..+5). Hand data is the floor;
@@ -1653,6 +1670,7 @@ export function analyzeTeam(
   // Capability profile — single source of truth for win conditions + the radar.
   const capabilities = computeTeamCapabilities(myPicks, physicalStackScore);
   const traits = computeTeamTraits(myPicks);
+  const identity = computeTeamIdentity(myPicks);
 
   // Win conditions (a named summary of the capability profile)
   const winConditions = detectWinConditions(myPicks, physicalStackScore, capabilities);
@@ -1707,6 +1725,7 @@ export function analyzeTeam(
     heroFreedom,
     capabilities,
     traits,
+    identity,
     recommendedPicks: rankPicks(myPickIds, enemyPickIds, availableHeroIds, myPicks, missingUtility, laneVerdict, roleAssignments, heroPool, pickContext, ablate),
   };
 }
@@ -1734,6 +1753,7 @@ export interface RankPicksAblation {
   roleCoverage?: boolean; // composition-fit: role coverage + safe lane needs + missing utility
   capability?: boolean;   // capability-profile gap-fill / space / damage-balance / lead-extend
   timing?: boolean;       // draft-position timing / fragility ("exposure")
+  meta?: boolean;         // patch-meta popularity boost (registered provider)
 }
 
 function rankPicks(
@@ -1883,6 +1903,21 @@ function rankPicks(
       }
     }
 
+    // Patch-meta popularity — heroes strong/contested in the current meta get a
+    // graded boost, mirroring rankBanThreats' metaBanBoost. This is what pros
+    // actually weigh heavily; without it the engine recommends structurally-sound
+    // but out-of-meta heroes (measured in the Section 7.5 evaluation). The note is
+    // promoted into the final reasons (like capReason) — a score contribution this
+    // large must be visible in the explanation.
+    let metaReason: string | undefined;
+    if (!ablate.meta && metaPickProvider) {
+      const m = metaPickProvider(hero.id);
+      if (m.boost > 0) {
+        score += m.boost;
+        metaReason = m.note;
+      }
+    }
+
     // Draft-position timing — counterable heroes want a protected (late) slot.
     let timing: PickTiming | undefined;
     if (!ablate.timing && pickContext) {
@@ -1908,10 +1943,10 @@ function rankPicks(
       } else timing = 'safe_now';
     }
 
-    // Surface the capability insight prominently (right after the top reason).
+    // Surface the capability and meta insights prominently (after the top reason).
     const base = [...new Set(reasons)];
-    const finalReasons = (capReason
-      ? [...new Set([base[0], capReason, ...base.slice(1)].filter(Boolean))]
+    const finalReasons = (capReason || metaReason
+      ? [...new Set([base[0], capReason, metaReason, ...base.slice(1)].filter(Boolean))]
       : base) as string[];
     return { heroId: hero.id, score, reasons: finalReasons.slice(0, 3), tag, timing };
   })

@@ -332,6 +332,43 @@ Made the app deployable (`render.yaml`, `frontend/vercel.json`, `DEPLOY.md`) and
 - **CORS origin is now environment-configurable** (`CORS_ORIGIN`, comma-separated, defaults to the local Vite dev server) instead of hardcoded to `localhost:5173`.
 - Verified by building and running the compiled server exactly as the host would (`npm run build && PORT=… CORS_ORIGIN=… node dist/backend/src/index.js`): health check, the model endpoint, and a CORS preflight all confirmed working — including that a non-allowlisted origin is correctly rejected. All 75 tests and both type-checks stayed green; local dev is unaffected since both env vars default to the existing localhost setup.
 
+### Session 25 — Experienced-player expansion (routing, playstyles, match archive, encyclopedia, tips)
+Six-checkpoint feature expansion aimed at experienced players:
+- **Client routing** (`react-router-dom`, previously an unused dependency): `/` draft screen, `/heroes` index, `/heroes/:heroName` detail, `/tips` — with `NavTabs` in the top bar, a `PageShell` layout for scrollable pages, an SPA rewrite in `vercel.json` (deep links no longer 404 in production), and Redux state deliberately mounted above the router so an in-progress draft survives navigation.
+- **Hero playstyles (`shared/heroPlaystyles.ts`)** — 10 archetypes (constant/cooldown fighter, split-map farmer, greedy farmer, initiator, frontline, backline, roamer, tempo controller, global presence); ~115 hand-tagged heroes with tag-derived defaults guaranteeing full-roster coverage.
+- **Team Identity panel (beta)** — `shared/teamIdentity.ts` reads the five picks as a cast and flags misalignment: "Draft too greedy" (3+ farm-dependent heroes), "No initiator", "No frontline", fighting-rhythm narration (constant vs. on-cooldown), split-map/global presence, support mobility. Wired into `analyzeTeam()` (additive `identity` field) and rendered in both the live analysis column and the draft summary.
+- **Counter-item upgrades (`shared/matchups.ts`)** — `itemsThatCounter(hero)` inverse lookup (Break vs Bristleback/Spectre/Tide, MKB vs PA, detection vs invis) powering the encyclopedia's "items that counter this hero" section; **stacked-threat escalation** in the recommendation engine (`stackedNote`): 2+ invis heroes escalate detection to core, 2+ heavy casters escalate Pipe, 3+ heroes answered by one item escalates it — surfaced with an amber note in the Items panel.
+- **Backend routes** — `GET /api/players/:accountId/matches` (player's last 10 games via OpenDota recentMatches, 5-min cache) and `GET /api/heroes/:id/pros` (pro players who recently played the hero + up to 3 loadable match ids each; the multi-MB `/proPlayers` payload is fetched once per day and kept only as an id→name map with in-flight dedupe).
+- **Load Match hub** — replaced the single Import modal with a four-tab hub: **My Games** (enter Dota Friend ID once — stored via `playerIdentity.ts` with a `provider` field so Steam OpenID can slot in later; lists last 10 games with W/L + CM badges), **Pro Matches** (one-click load), **Showcase** (5 curated archetype drafts in `shared/showcaseDrafts.ts`, offline, each teaching one drafting lesson the analysis engine narrates), **Match ID** (paste-id; the old hard-throw on non-CM matches replaced by a **pub fallback** that reconstructs picks-only manual drafts from the players array with side derived from `player_slot`).
+- **Hero encyclopedia** — index page with search, attribute + playstyle chip filters over the full 124-hero roster; detail pages with identity header, strengths/weaknesses/spikes, solo capability bars, curated + live matchup sections, item progression by phase (live popularity), items-that-counter, and pros-to-watch with replay chips that load the pro game's draft straight into the analyzer.
+- **Tips page** — 40 curated tips across drafting/laning/mid-game/itemization/map categories with hero portrait links into the encyclopedia.
+- **Interactions expansion** — matchup table grown 320 → 404 entries (contested mid matchups with notes, safelane-vs-offlane matchups, pos-4/5 lane duos, counters for newer heroes), plus a **dedup pass** that removed 12 dead duplicate entries (`.find()` first-match semantics silently shadowed them) and a new data test that forbids same-field duplicates per hero pair; coverage floor test raised to ≥400.
+- **HTML-validity fix** — `HeroPortrait` now renders a `<div>` when presentational (no `onClick`), eliminating invalid button-in-button / button-in-anchor nesting flagged by React in the hub and encyclopedia lists.
+- 109 tests (was 75); every checkpoint verified live in the browser (draft-state persistence across navigation, greedy-draft identity warnings, stacked detection note with Riki+Clinkz, CM and pub match imports, Friend-ID flow with a real public account, showcase loads, pro replay chips, playstyle filtering, thin-hero fallback pages).
+
+### Session 26 — Meta-popularity signal in pick suggestions (closing the Section 7.5 gap)
+The Section 7.5 evaluation's root-caused finding — pick suggestions carried no patch-meta signal while ban threats did (`metaBanBoost`), so a naive most-picked baseline (Top-3 13.3%) beat the full engine (2.2%) — is now fixed and re-measured.
+- **`setMetaPickProvider` (shared/scoring.ts)** — a registered-provider hook exactly like `setLiveMatchupProvider`: the frontend registers `metaPickBoost` (live Immortal-bracket relative pick rates from metaService, graded 0–15 + S-tier bump, note above 50% pick rate); the backtest registers a provider derived from the corpus's own pick counts — the *same counts its most-picked baseline ranks by*, so the engine gains no information the baseline doesn't have. No provider registered → identical behavior to before.
+- **`meta` ablation flag** added to `RankPicksAblation`; the meta note is promoted into the final reasons alongside `capReason` (a score contribution this large must be visible in the explanation — best-effort appending got truncated by the 3-reason cap in practice).
+- **Live UX**: `loadMeta()` now bumps the matchup version on arrival so open analyses recompute; suggestions show reasons like *"Meta staple — 85% relative pick rate in Immortal bracket"*.
+- **Re-measured over the same 2,500 pro drafts / 25,000 pick events:**
+
+| Metric | Before (no meta) | After (with meta) | Most-picked baseline |
+|---|---|---|---|
+| Top-1 agreement | 0.6% | **5.3%** | 5.4% |
+| Top-3 agreement | 2.2% | **10.8%** | 13.3% |
+| Top-5 agreement | 3.6% | **14.7%** | 19.8% |
+
+- The meta-ablation row (Δ−8.6pp Top-3, exactly reproducing the old engine) confirms the original diagnosis; the other five modules each move agreement by ≤0.5pp — consistent with the project's replicated finding that the structural coaching layer is explanatory rather than predictive of professional pick behavior. The engine now reaches Top-1 parity with the popularity baseline while keeping hero-specific explanations; median full-analysis latency 6.61 ms (P95 14.5 ms), still ~75× under the 500 ms target.
+- 110 tests; the new scoring test proves the provider boosts a hero into the top-5, ablates cleanly, and that the engine is bit-identical when no provider is registered.
+
+### Session 27 — Greed messaging consolidated (space economy ↔ Team Identity)
+The space-economy note (`heroTraits.ts`) and the Team Identity greed warning could fire on the same draft with near-identical wording — and worse, **contradict** each other (a greedy trio + a space-creator read "Space looks healthy" in the capability panel and "Draft too greedy" in the identity panel simultaneously). Now consolidated:
+- **One verdict source**: `computeTeamIdentity` reads `computeTeamTraits`' provider data. A greedy cast **with** a space-creator downgrades from a warning to an *info* plan — *"Greedy, but supported: … Tidehunter must stay active to buy it; protect that plan."* Only a greedy cast with **zero** creators warns (*"…nobody creates space for them — the enemy only has to force early tempo."*).
+- **Two distinct voices**: heroTraits keeps the counts-and-balance economy voice (the word "Greedy" removed — *"3 space-hungry cores leaning on 1 space-creator"*); Team Identity owns the named-cast narrative. The misleading neutral fallback (*"Flexible / support-heavy"*) now reports farm-dependent cores when present.
+- **Cross-reference**: when the economy is strained, the capability panel's space note points to *"Who and how: Team Identity below."*
+- 111 tests — including a new one proving the provider-downgrade agrees with the space rating (no more contradictions by construction).
+
 ---
 
 ## File Map
@@ -345,7 +382,6 @@ frontend/src/
 │   ├── CapabilityPanel.tsx      # Dual-overlay capability radar + damage/space/Rosh traits
 │   ├── ComparisonPanel.tsx      # Win probability bar (model) + heuristic comparison
 │   ├── DraftHistoryPanel.tsx    # Saved draft list with load/delete
-│   ├── DraftImport.tsx          # Import draft from match ID
 │   ├── DraftRoleBoard.tsx       # Centre-screen role board during draft
 │   ├── DraftScreen.tsx          # Main 3-column layout + top bar
 │   ├── DraftHealthPanel.tsx     # Rotations & draft health (rune/gate/mid, combos, avoids)
@@ -363,14 +399,27 @@ frontend/src/
 │   ├── RolePicker.tsx           # Click-to-open role dropdown; drives analysis
 │   ├── SaveDraftModal.tsx       # Save draft with name/outcome/notes
 │   ├── ScoreBar.tsx             # Score progress bar
+│   ├── TeamIdentityPanel.tsx    # Team Identity (beta) — playstyle cast + alignment notes
 │   ├── TeamPanel.tsx            # Team slot column with role badges
-│   └── TeamTags.tsx             # Utility tags, power bar, complexity
+│   ├── TeamTags.tsx             # Utility tags, power bar, complexity
+│   ├── hero/                    # Encyclopedia sections (PlaystyleBadges, matchups, items, counters, pros)
+│   ├── layout/                  # NavTabs + PageShell route chrome
+│   └── loadmatch/               # Load Match hub (MyGames / ProMatches / Showcase / MatchId tabs)
+├── pages/
+│   ├── HeroIndexPage.tsx        # /heroes — search + attribute/playstyle filters
+│   ├── HeroDetailPage.tsx       # /heroes/:heroName — full hero profile
+│   └── TipsPage.tsx             # /tips — 40 curated tips with category chips
 ├── data/
 │   ├── draftOrder.ts            # Captains Mode + Manual slot sequences
 │   ├── draftStorage.ts          # localStorage saved draft CRUD
 │   ├── heroBuildService.ts      # OpenDota itemPopularity fetcher + consumable filter
-│   ├── matchupService.ts        # OpenDota matchup win rates cache
+│   ├── heroProsService.ts       # /heroes/:id/pros fetcher with session cache
+│   ├── matchImport.ts           # OpenDota match → SavedDraft (CM path + pub players[] fallback)
+│   ├── matchupService.ts        # OpenDota matchup win rates cache (+ getMatchupRowsFor)
 │   ├── metaService.ts           # Immortal bracket tier classification
+│   ├── playerIdentity.ts        # Friend ID identity in localStorage (Steam OpenID-ready)
+│   ├── playerMatchesService.ts  # /players/:id/matches fetcher
+│   ├── tips.ts                  # 40 curated tips (5 categories)
 │   └── winModelService.ts       # Loads trained model; getRadiantWinProbability()
 ├── store/
 │   ├── draftSlice.ts            # Redux slice (selectHero, undo, assignRole, loadDraft…)
@@ -382,18 +431,22 @@ frontend/src/
     └── scoring.ts               # analyzeTeam(), rankBanThreats(), win conditions
 
 shared/                          # Framework-free TS — used by both frontend and backend
+├── apiContracts.ts              # Backend↔frontend response shapes (recent matches, hero pros)
 ├── capabilities.ts              # computeTeamCapabilities() — 11-axis "can/can't" profile
+├── heroPlaystyles.ts            # 10 playstyle archetypes; overrides + derived defaults
 ├── heroTraits.ts                # damage type, space economy, Roshan reliance (+ team aggregate)
 ├── heroFreedom.ts               # analyzeHeroFreedom() + fragility (free game vs. counters)
 ├── heroMechanics.ts             # 127-hero mechanic profiles (reliance/vulnerable)
 ├── heroMetadata.ts              # Metadata for all heroes (roles, metaRole, utilityTags)
 ├── heroPool.ts                  # Builds Hero objects from OpenDota raw + local metadata
-├── interactions.ts              # 250+ synergy/counter pairs
+├── interactions.ts              # 400+ synergy/counter/lane/duo pairs
 ├── items.ts                     # ~40 ItemDef entries with mechanics/timing; itemIconUrl()
 ├── matchupGrades.ts             # Four graded matchup scales (0–10)
-├── matchups.ts                  # computeItemMatchups() — mechanic-based item recommender
+├── matchups.ts                  # computeItemMatchups() + itemsThatCounter() + stacked-threat notes
 ├── mechanics.ts                 # Mechanic/Reliance vocabulary + RELIANCE_ANSWERS
 ├── scoring.ts                   # Full scoring engine (analyzeTeam, win conditions, lanes)
+├── showcaseDrafts.ts            # 5 curated archetype drafts for the Load Match hub
+├── teamIdentity.ts              # computeTeamIdentity() — cast narration + alignment warnings
 ├── types.ts                     # Shared domain types
 └── winModel.ts                  # predictRadiantWinProb() — pure sigmoid predictor
 

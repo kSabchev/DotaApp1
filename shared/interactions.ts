@@ -418,7 +418,6 @@ const RAW: RawInteraction[] = [
   { hero: 'slardar', target: 'faceless_void', synergyScore: 7, synergyType: 'armor_reduction', reason: 'Slardar Corrosive Haze amplifies Faceless Void right-click inside Chrono' },
   { hero: 'elder_titan', target: 'antimage',  synergyScore: 8, synergyType: 'armor_reduction', reason: 'Natural Order removes base armor, AM right-click becomes lethal' },
   { hero: 'elder_titan', target: 'faceless_void', synergyScore: 8, synergyType: 'armor_reduction', reason: 'Natural Order inside Chronosphere makes Void\'s right-click lethal on any hero' },
-  { hero: 'dazzle', target: 'antimage',  synergyScore: 7, synergyType: 'armor_reduction', reason: 'Weave reduces armor while AM Mana Voids for burst kills' },
 
   // ──────────────────────────────────────────────────────────────────
   // LANE PARTNER — additional safe lane duos
@@ -526,7 +525,6 @@ const RAW: RawInteraction[] = [
   { hero: 'bloodseeker', target: 'phantom_lancer', counterScore: 6, counterType: 'vision', reason: 'Bloodrite silence reveals illusions; Thirst provides global vision' },
 
   // Medusa counters
-  { hero: 'silencer', target: 'enigma', counterScore: 8, counterType: 'channel_disrupt', reason: 'Mystic Snake drains Enigma mana before Black Hole can be channeled' },
   { hero: 'medusa', target: 'faceless_void', counterScore: 6, counterType: 'channel_disrupt', reason: 'Stone Gaze can prevent Faceless Void from starting Chronosphere' },
 
   // Tinker vs carries
@@ -546,7 +544,6 @@ const RAW: RawInteraction[] = [
 
   // Vengeful Spirit additional
   { hero: 'vengefulspirit', target: 'antimage',  synergyScore: 7, synergyType: 'buff_aura', reason: 'Vengeance Aura boosts Anti-Mage right-click DPS significantly' },
-  { hero: 'vengefulspirit', target: 'drow_ranger',  synergyScore: 8, synergyType: 'buff_aura', reason: 'Vengeance Aura + Drow Marksmanship aura stack for ranged-heavy teams' },
 
   // Night Stalker (60 is Nyx; NS = 60 is wrong. Night Stalker = 60? Let's skip)
   // Necrophos (36 is Magnus; Necro = 36? No. Necro = 36? Actually Necrophos = 36 in OD)
@@ -653,7 +650,6 @@ const RAW: RawInteraction[] = [
   // ── Templar Assassin additional ──
   { hero: 'templar_assassin', target: 'queenofpain', laneMatchupScore: 2,  reason: 'TA Refraction absorbs QoP burst; Psionic Trap controls QoP\'s blink paths', midMatchupNote: 'TA beats QoP — Refraction tanks her combo; Psi Traps slow her escape' },
   { hero: 'templar_assassin', target: 'lina', laneMatchupScore: 2,  reason: 'TA Refraction negates Lina\'s burst; TA outdamages Lina in direct fights', midMatchupNote: 'TA vs Lina — Refraction makes Lina\'s early game irrelevant; TA wins right-click fights' },
-  { hero: 'templar_assassin', target: 'storm_spirit', laneMatchupScore: 3,  reason: 'Refraction blocks Storm burst; TA\'s Meld one-shots Storm post-dagger', midMatchupNote: 'TA hard counters Storm — Refraction negates all of Storm\'s damage' },
 
   // ── Anti-Mage matchup vs carries ──
   { hero: 'antimage', target: 'juggernaut',  laneMatchupScore: -2, reason: 'Juggernaut Blade Fury provides spell immunity that blocks AM Mana Void', midMatchupNote: 'AM vs Jugg safe lane — Blade Fury makes AM ineffective; Jugg can freely farm' },
@@ -662,7 +658,6 @@ const RAW: RawInteraction[] = [
   { hero: 'silencer', target: 'nevermore', synergyScore: 6, synergyType: 'global', reason: 'Silencer Last Word + SF Requiem forces poor positioning or punishes channeled ults' },
   { hero: 'silencer', target: 'invoker', counterScore: 8, counterType: 'silence', reason: 'Silencer Curse of the Silent and Glaives drain Invoker\'s mana; Last Word stops invoke', midMatchupNote: 'Silencer counters Invoker hard — Glaives burn mana required for spells; Last Word on invoke' },
   { hero: 'silencer', target: 'storm_spirit', counterScore: 8, counterType: 'mana_burn', reason: 'Silencer Glaives of Wisdom burn Storm Spirit\'s mana, making Ball Lightning impossible' },
-  { hero: 'silencer', target: 'enigma', counterScore: 9, counterType: 'channel_disrupt', reason: 'Last Word instantly triggers if Enigma tries to channel Black Hole' },
   { hero: 'silencer', target: 'crystal_maiden',  counterScore: 8, counterType: 'mana_burn', reason: 'Silencer Glaives rapidly drain Crystal Maiden\'s mana; Global Silence shuts her down' },
 
   // ── Doom additional matchups ──
@@ -689,7 +684,6 @@ const RAW: RawInteraction[] = [
   { hero: 'faceless_void', target: 'batrider', laneMatchupScore: -2, reason: 'Batrider Lasso can remove Faceless Void from his own Chronosphere', midMatchupNote: 'Batrider counters Void — Lasso can be used to drag Void out of Chronosphere' },
 
   // ── Axe vs priority bans ──
-  { hero: 'axe', target: 'puck', counterScore: 6, counterType: 'burst', reason: 'Axe Berserker\'s Call locks Puck before Phase Shift and prevents evasion' },
   { hero: 'axe', target: 'phantom_lancer', counterScore: 7, counterType: 'illusion_counter', reason: 'Axe Counter Helix triggers on every PL illusion hit — Berserker\'s Call forces all to attack' },
 
   // ── Phantom Lancer additional counters ──
@@ -719,7 +713,6 @@ const RAW: RawInteraction[] = [
   { hero: 'zuus', target: 'faceless_void', synergyScore: 8, synergyType: 'global', reason: 'Zeus Wrath hits all heroes trapped in Chronosphere for free damage' },
 
   // ── Crystal Maiden additional matchups ──
-  { hero: 'crystal_maiden', target: 'sven', lanePartnerScore: 9, reason: 'CM Frostbite roots Sven in place; God\'s Strength guarantees kills when rooted' },
   { hero: 'crystal_maiden', target: 'faceless_void', lanePartnerScore: 8, reason: 'CM Freezing Field channels freely inside Chronosphere for max AoE damage' },
   { hero: 'crystal_maiden', target: 'invoker', lanePartnerScore: 7, reason: 'CM mana aura removes Invoker\'s biggest early weakness; sets up Cold Snap combos' },
 
@@ -732,7 +725,6 @@ const RAW: RawInteraction[] = [
   { hero: 'invoker', target: 'earthshaker',  synergyScore: 7, synergyType: 'wombo_combo', reason: 'Cold Snap on Earthshaker\'s jump target triggers Echo Slam bouncing' },
 
   // ── Dazzle additional ──
-  { hero: 'dazzle', target: 'faceless_void', lanePartnerScore: 7, reason: 'Dazzle Shallow Grave lets Faceless Void risk Chronosphere without dying to burst' },
   { hero: 'dazzle', target: 'terrorblade', lanePartnerScore: 7, reason: 'Shallow Grave lets Terrorblade fight with low HP for Metamorphosis maximum damage' },
 
   // ── Io additional ──
@@ -772,6 +764,116 @@ const RAW: RawInteraction[] = [
   { hero: 'batrider', target: 'magnataur', counterScore: 7, counterType: 'mobility', reason: 'Batrider Lasso catches Magnus before RP is available; Sticky Napalm reduces armor' },
   { hero: 'batrider', target: 'enigma', counterScore: 8, counterType: 'channel_disrupt', reason: 'Batrider can Lasso Enigma mid-Black Hole channel and drag him away from the fight' },
   { hero: 'batrider', target: 'faceless_void', counterScore: 7, counterType: 'mobility', reason: 'Sticky Napalm reduces Faceless Void armor; Lasso can catch Void before Chrono' },
+
+  // ──────────────────────────────────────────────────────────────────
+  // EXPANSION: contested MID matchups (laneMatchupScore + midMatchupNote)
+  // ──────────────────────────────────────────────────────────────────
+  { hero: 'puck', target: 'templar_assassin', laneMatchupScore: 2, reason: 'Illusory Orb + Phase Shift dodge Psi Blade trades and break Refraction charges from range', midMatchupNote: 'Puck chips Refraction with spells TA cannot dodge and escapes Meld burst' },
+  { hero: 'obsidian_destroyer', target: 'templar_assassin', laneMatchupScore: 3, reason: 'Astral Imprisonment steals TA int and Arcane Orb pure damage ignores Refraction poorly-armored trades', midMatchupNote: 'OD banishes TA out of Meld and out-trades her with pure damage orbs' },
+  { hero: 'obsidian_destroyer', target: 'huskar', laneMatchupScore: 3, reason: 'Arcane Orb pure damage ignores Huskar magic resistance from Berserker\'s Blood', midMatchupNote: 'Pure damage is the answer to Huskar — his magic resist does nothing vs Arcane Orb' },
+  { hero: 'viper', target: 'huskar', laneMatchupScore: 3, reason: 'Nethertoxin breaks Berserker\'s Blood — Huskar loses his passive in Viper\'s zone', laneNote: 'Break shuts down Huskar\'s entire kit in lane' },
+  { hero: 'huskar', target: 'sniper', laneMatchupScore: 4, reason: 'Burning Spears out-trade Sniper at every range; Life Break closes the gap at 6', midMatchupNote: 'Sniper has no answer to spear harass and dies to the first Life Break all-in' },
+  { hero: 'huskar', target: 'lina', laneMatchupScore: 2, reason: 'Berserker\'s Blood magic resistance blunts Lina\'s burst once Huskar has levels', midMatchupNote: 'Lina wins the first waves; Huskar takes over once spears stack with attack speed' },
+  { hero: 'ember_spirit', target: 'lina', laneMatchupScore: 2, reason: 'Sleight of Fist dodges Light Strike Array and trades free damage', midMatchupNote: 'Ember trades through Lina\'s cast animations with Sleight and escapes with Remnant' },
+  { hero: 'void_spirit', target: 'storm_spirit', laneMatchupScore: 2, reason: 'Resonant Pulse harass and Dissimilate dodge beat Storm before level 6', midMatchupNote: 'Void Spirit wins the early lane; must press the advantage before Storm scales' },
+  { hero: 'pangolier', target: 'nevermore', laneMatchupScore: 2, reason: 'Swashbuckle harass punishes SF\'s low armor and weak early trades', midMatchupNote: 'Pango bullies SF off the wave early; SF needs raze levels to push back' },
+  { hero: 'lina', target: 'sniper', laneMatchupScore: 2, reason: 'Laguna Blade bursts Sniper the moment he steps up at level 6', midMatchupNote: 'Even trade until 6 — then Lina one-combos Sniper every rotation' },
+  { hero: 'sniper', target: 'pudge', laneMatchupScore: 3, reason: 'Sniper outranges Meat Hook and shrapnel reveals hook attempts', midMatchupNote: 'Pudge cannot reach Sniper in lane — hooks are telegraphed at that range' },
+  { hero: 'tinker', target: 'nevermore', laneMatchupScore: 3, reason: 'March of the Machines + missile harass deny SF razes and farm', midMatchupNote: 'Tinker chips SF under tower and denies the raze pattern; SF falls behind by 10 minutes' },
+  { hero: 'storm_spirit', target: 'tinker', laneMatchupScore: 2, reason: 'Ball Lightning closes on Tinker before defensive items and punishes March channels', midMatchupNote: 'Storm all-ins Tinker at 6 before Blink/Force — Tinker must play far back' },
+  { hero: 'death_prophet', target: 'nevermore', laneMatchupScore: 2, reason: 'Spirit Siphon sustain out-trades SF razes; Crypt Swarm clears waves evenly', midMatchupNote: 'DP heals back raze damage and takes the tower first with Exorcism' },
+  { hero: 'leshrac', target: 'kunkka', laneMatchupScore: 2, reason: 'Split Earth + Lightning Storm spam beats Kunkka\'s slow melee trades', midMatchupNote: 'Leshrac shoves the wave faster and harasses Kunkka off the shrine timing' },
+  { hero: 'kunkka', target: 'templar_assassin', laneMatchupScore: 2, reason: 'Tidebringer cleave pops Refraction charges and denies TA last hits', midMatchupNote: 'Every Tidebringer swing strips Refraction — TA cannot trade into it' },
+  { hero: 'muerta', target: 'pudge', laneMatchupScore: 2, reason: 'Dead Shot fear interrupts hook attempts and Muerta outranges Pudge', midMatchupNote: 'Muerta kites hook range and punishes Rot trades from distance' },
+  { hero: 'zuus', target: 'invoker', laneMatchupScore: 2, reason: 'Arc Lightning spam denies Invoker farm before he has combo levels', midMatchupNote: 'Zeus wins the spam war early; Invoker needs Eul\'s/levels to fight back' },
+  { hero: 'batrider', target: 'huskar', laneMatchupScore: 3, reason: 'Sticky Napalm stacks make every Firefly pass deadly; Huskar cannot burst Bat', midMatchupNote: 'Napalm stacks beat Berserker\'s Blood — Huskar melts trying to trade' },
+  { hero: 'puck', target: 'kez', laneMatchupScore: 2, reason: 'Phase Shift and Illusory Orb dodge Kez\'s combo windows', midMatchupNote: 'Puck\'s elusiveness frustrates Kez — his burst needs him to stick to a target' },
+  { hero: 'viper', target: 'kez', laneMatchupScore: 3, reason: 'Nethertoxin breaks Kez passives and corrosive skin punishes his fast attacks', laneNote: 'Kez struggles to trade into Viper\'s attrition' },
+
+  // ──────────────────────────────────────────────────────────────────
+  // EXPANSION: safelane vs offlane matchups (laneMatchupScore + laneNote)
+  // ──────────────────────────────────────────────────────────────────
+  { hero: 'axe', target: 'juggernaut', laneMatchupScore: 3, reason: 'Counter Helix punishes Blade Fury spins at melee range', laneNote: 'Jugg cannot spin on Axe — Helix procs out-damage the fury' },
+  { hero: 'axe', target: 'phantom_assassin', laneMatchupScore: 3, reason: 'Berserker\'s Call forces PA to eat Counter Helix procs; blur does not dodge them', laneNote: 'PA\'s dagger harass is answered by Call + Helix trades' },
+  { hero: 'axe', target: 'terrorblade', laneMatchupScore: 4, reason: 'Berserker\'s Call hits TB through illusions and Helix clears them', laneNote: 'Classic counter — TB\'s illusions feed Helix spins and Call catches Sunder attempts' },
+  { hero: 'ursa', target: 'centaur', laneMatchupScore: 2, reason: 'Fury Swipes stack through Centaur\'s armor and out-trade Return', laneNote: 'Ursa wins extended trades once swipes stack past Return damage' },
+  { hero: 'bristleback', target: 'antimage', laneMatchupScore: 3, reason: 'Quill spray harass is unavoidable and AM has no burst to answer it', laneNote: 'AM bleeds out to quills — needs support rotation to survive the lane' },
+  { hero: 'tidehunter', target: 'medusa', laneMatchupScore: 2, reason: 'Gush armor shred + Anchor Smash damage reduction win every early trade', laneNote: 'Medusa farms from range or bleeds mana shield to Gush harass' },
+  { hero: 'razor', target: 'spectre', laneMatchupScore: 3, reason: 'Static Link drains Spectre\'s already-weak right-click; she cannot lane into it', laneNote: 'Link turns lane trades hopeless — Spectre must hug the tower' },
+  { hero: 'dark_seer', target: 'life_stealer', laneMatchupScore: 2, reason: 'Ion Shell sustain trades beat Feast healing wave-for-wave', laneNote: 'Shell chips Naix constantly; Vacuum saves ganks from Rage escapes' },
+  { hero: 'mars', target: 'gyrocopter', laneMatchupScore: 2, reason: 'Spear harass + Bulwark blocks Gyro\'s right-click trades', laneNote: 'Bulwark negates flak harass; spear punishes every step forward' },
+  { hero: 'mars', target: 'slark', laneMatchupScore: 2, reason: 'Arena of Blood traps Slark — Pounce cannot leash out and Dark Pact does not dispel the walls', laneNote: 'Slark cannot escape Arena; Mars wins every committed trade' },
+  { hero: 'slardar', target: 'morphling', laneMatchupScore: 2, reason: 'Bash bursts Morphling before he can shift agility to survive', laneNote: 'Early Slithereen Crush + bash all-ins beat low-str Morph builds' },
+  { hero: 'shredder', target: 'sven', laneMatchupScore: 3, reason: 'Reactive Armor absorbs Sven trades; Whirling Death chips through armor', laneNote: 'Sven cannot out-trade Reactive Armor stacks without his ult' },
+  { hero: 'bristleback', target: 'faceless_void', laneMatchupScore: 2, reason: 'Quill harass beats Void\'s weak lane presence before Time Lock stacks matter', laneNote: 'Void farms passively or bleeds — cannot pressure Bristle off the wave' },
+  { hero: 'abyssal_underlord', target: 'weaver', laneMatchupScore: 2, reason: 'Firestorm clears the wave under Weaver and Atrophy Aura guts his damage', laneNote: 'Weaver\'s harass is blunted by Atrophy; Firestorm zones him off the wave' },
+  { hero: 'viper', target: 'monkey_king', laneMatchupScore: 3, reason: 'Nethertoxin breaks Jingu Mastery — MK loses his entire lane trade pattern', laneNote: 'Break denies Jingu stacks; MK cannot win trades without the passive' },
+  { hero: 'night_stalker', target: 'luna', laneMatchupScore: 2, reason: 'Void slows and night vision windows beat Luna\'s short-range farming', laneNote: 'First night phase is Luna\'s nightmare — NS controls the whole lane' },
+  { hero: 'centaur', target: 'phantom_assassin', laneMatchupScore: 2, reason: 'Return punishes dagger and right-click harass; Hoof Stomp sets up kills', laneNote: 'PA feeds Return damage every trade attempt' },
+  { hero: 'doom_bringer', target: 'templar_assassin', laneMatchupScore: 2, reason: 'Scorched Earth sustain + Devour farm keep Doom even; Doom removes TA from fights at 6', laneNote: 'TA cannot deny Doom his jungle income; level 6 flips the lane' },
+
+  // ──────────────────────────────────────────────────────────────────
+  // EXPANSION: pos 4/5 lane duos (lanePartnerScore)
+  // ──────────────────────────────────────────────────────────────────
+  { hero: 'wisp', target: 'gyrocopter', lanePartnerScore: 9, reason: 'Tether + Overcharge turns Gyro\'s flak trades unwinnable; classic Io+Gyro dive duo' },
+  { hero: 'dazzle', target: 'slardar', lanePartnerScore: 7, reason: 'Poison Touch slow into Slithereen Crush chains; Shallow Grave enables fearless dives' },
+  { hero: 'witch_doctor', target: 'luna', lanePartnerScore: 7, reason: 'Paralyzing Cask bounces in a 2v2 lane; Maledict amplifies Luna\'s beam bursts' },
+  { hero: 'shadow_shaman', target: 'drow_ranger', lanePartnerScore: 7, reason: 'Shackles holds targets in Frost Arrow range; double disable secures early kills' },
+  { hero: 'lion', target: 'sven', lanePartnerScore: 8, reason: 'Earth Spike sets up Storm Hammer chains — four seconds of lockdown per rotation' },
+  { hero: 'jakiro', target: 'monkey_king', lanePartnerScore: 7, reason: 'Ice Path + Boundless Strike stun chain; Liquid Fire helps MK win tower trades' },
+  { hero: 'disruptor', target: 'gyrocopter', lanePartnerScore: 7, reason: 'Kinetic Field traps targets inside Rocket Barrage and Call Down' },
+  { hero: 'treant', target: 'sven', lanePartnerScore: 7, reason: 'Living Armor lets Sven trade recklessly; Leech Seed slow sets up Storm Hammer' },
+  { hero: 'ogre_magi', target: 'troll_warlord', lanePartnerScore: 8, reason: 'Bloodlust on Troll is one of the highest attack-speed buffs in the game; Fireblast setup' },
+  { hero: 'oracle', target: 'ursa', lanePartnerScore: 8, reason: 'False Promise turns Ursa\'s all-in dives unkillable; purges slows chasing him' },
+  { hero: 'grimstroke', target: 'sven', lanePartnerScore: 8, reason: 'Soulbind hits two targets with one Storm Hammer; Stroke of Fate harass wins the lane' },
+  { hero: 'undying', target: 'huskar', lanePartnerScore: 7, reason: 'Tombstone zombies slow everyone near Huskar\'s spears; Decay strength steal wins trades' },
+  { hero: 'vengefulspirit', target: 'drow_ranger', lanePartnerScore: 8, reason: 'Wave of Terror armor shred + Magic Missile setup feed Frost Arrow kite kills; Swap saves Drow' },
+  { hero: 'marci', target: 'medusa', lanePartnerScore: 7, reason: 'Dispose peels divers off Medusa and Rebound pressure buys her farming space' },
+  { hero: 'hoodwink', target: 'sniper', lanePartnerScore: 7, reason: 'Bushwhack setup extends Sniper\'s kite pattern; Scurry saves him from ganks' },
+  { hero: 'snapfire', target: 'phantom_assassin', lanePartnerScore: 7, reason: 'Firesnap Cookie jumps PA onto targets — a free gap-close her kit lacks' },
+  { hero: 'earth_spirit', target: 'ember_spirit', lanePartnerScore: 7, reason: 'Boulder Smash + Rolling stuns hold targets through full Sleight of Fist trades' },
+
+  // ──────────────────────────────────────────────────────────────────
+  // EXPANSION: counters for newer / under-covered heroes
+  // ──────────────────────────────────────────────────────────────────
+  { hero: 'ancient_apparition', target: 'dawnbreaker', counterScore: 8, counterType: 'sustain_counter', reason: 'Ice Blast nullifies Luminosity healing and Solar Guardian\'s heal — Dawn\'s whole kit is sustain' },
+  { hero: 'ancient_apparition', target: 'necrolyte', counterScore: 7, counterType: 'sustain_counter', reason: 'Ice Blast turns off Death Pulse and Heartstopper sustain battles' },
+  { hero: 'silencer', target: 'primal_beast', counterScore: 6, counterType: 'silence', reason: 'Global Silence interrupts Pulverize channel and stops Trample initiations' },
+  { hero: 'spirit_breaker', target: 'ringmaster', counterScore: 6, counterType: 'channel_disrupt', reason: 'Charge of Darkness interrupts the Wheel channel and punishes Ringmaster\'s long cast points' },
+  { hero: 'silencer', target: 'ringmaster', counterScore: 6, counterType: 'silence', reason: 'Global Silence cancels the Wheel and strands Ringmaster mid-act' },
+  { hero: 'shredder', target: 'monkey_king', counterScore: 7, counterType: 'vision', reason: 'Timbersaw cuts the trees MK perches on — Tree Dance becomes a liability' },
+  { hero: 'nyx_assassin', target: 'skywrath_mage', counterScore: 7, counterType: 'burst', reason: 'Spiked Carapace reflects Sky\'s burst onto himself; Mana Burn scales off his huge int pool' },
+  { hero: 'muerta', target: 'phantom_assassin', counterScore: 7, counterType: 'kite', reason: 'Pierce the Veil makes Muerta immune to PA\'s physical damage while her own damage becomes magical' },
+  { hero: 'axe', target: 'kez', counterScore: 6, counterType: 'burst', reason: 'Berserker\'s Call locks Kez mid-combo and Counter Helix punishes his rapid attacks' },
+  { hero: 'legion_commander', target: 'kez', counterScore: 6, counterType: 'burst', reason: 'Duel locks Kez out of his mobility windows — he must fight without escapes' },
+  { hero: 'bane', target: 'dawnbreaker', counterScore: 6, counterType: 'channel_disrupt', reason: 'Fiend\'s Grip stops Solar Guardian channels and holds Dawn through her Starbreaker swings' },
+  { hero: 'shadow_demon', target: 'marci', counterScore: 6, counterType: 'kite', reason: 'Demonic Purge slows Marci through Rebound and dispels Sidekick from her carry' },
+  { hero: 'winter_wyvern', target: 'marci', counterScore: 6, counterType: 'kite', reason: 'Winter\'s Curse turns Marci\'s Unleash flurry against her own team' },
+  { hero: 'grimstroke', target: 'primal_beast', counterScore: 6, counterType: 'silence', reason: 'Ink Swell + Phantom\'s Embrace interrupt Pulverize; Soulbind catches him with a partner' },
+  { hero: 'lion', target: 'void_spirit', counterScore: 6, counterType: 'burst', reason: 'Hex ignores Dissimilate dodge windows — instant transformation stops his combo' },
+  { hero: 'skywrath_mage', target: 'dark_willow', counterScore: 6, counterType: 'silence', reason: 'Ancient Seal silences Willow before Shadow Realm — she has no answer once sealed' },
+  { hero: 'dark_willow', target: 'juggernaut', counterScore: 6, counterType: 'kite', reason: 'Terrorize fears Juggernaut out of Blade Fury and Shadow Realm dodges Omnislash bounces' },
+  { hero: 'pangolier', target: 'ursa', counterScore: 6, counterType: 'kite', reason: 'Rolling Thunder knocks Ursa around during Enrage; Swashbuckle keeps distance from swipes' },
+  { hero: 'primal_beast', target: 'sniper', counterScore: 7, counterType: 'mobility', reason: 'Onslaught crosses the entire kite range and Pulverize holds Sniper for the team' },
+  { hero: 'dawnbreaker', target: 'clinkz', counterScore: 6, counterType: 'vision', reason: 'Celestial Hammer\'s fire trail reveals and burns Clinkz through Skeleton Walk escape attempts' },
+
+  // ── EXPANSION (round 2): replacements for deduplicated entries ──
+  { hero: 'huskar', target: 'invoker', laneMatchupScore: 3, reason: 'Burning Spears out-trade Invoker before he has combo levels; magic resist blunts his spells', midMatchupNote: 'Huskar runs Invoker out of the lane early — Invoker needs Cold Snap levels and support help' },
+  { hero: 'templar_assassin', target: 'sniper', laneMatchupScore: 3, reason: 'Refraction walks TA through Sniper harass and Meld burst deletes him', midMatchupNote: 'Sniper cannot break Refraction charges fast enough — TA closes and kills' },
+  { hero: 'obsidian_destroyer', target: 'invoker', laneMatchupScore: 2, reason: 'Astral Imprisonment steals int and dodges Sunstrike combos', midMatchupNote: 'OD out-trades Invoker orb-for-orb before level 12' },
+  { hero: 'nevermore', target: 'kunkka', laneMatchupScore: 2, reason: 'Triple raze harass beats Kunkka\'s melee wave control', midMatchupNote: 'SF razes deny Tidebringer trades; Kunkka needs gank help mid' },
+  { hero: 'legion_commander', target: 'antimage', laneMatchupScore: 2, reason: 'Overwhelming Odds harass and Press the Attack trades bully AM\'s weak lane', laneNote: 'AM concedes the lane and farms defensively vs LC pressure' },
+  { hero: 'mars', target: 'drow_ranger', laneMatchupScore: 3, reason: 'God\'s Rebuke closes the gap and Bulwark blocks Frost Arrow kiting', laneNote: 'Drow\'s physical kite pattern dies against Bulwark' },
+  { hero: 'tidehunter', target: 'ursa', laneMatchupScore: 2, reason: 'Kraken Shell sheds Fury Swipes stacks and Anchor Smash guts Ursa\'s trade damage', laneNote: 'Anchor Smash -damage makes Ursa trades toothless in lane' },
+  { hero: 'winter_wyvern', target: 'phantom_lancer', counterScore: 7, counterType: 'illusion_counter', reason: 'Splinter Blast shatters the illusion army and Winter\'s Curse turns the doppelganger swarm on PL' },
+  { hero: 'lich', target: 'juggernaut', lanePartnerScore: 7, reason: 'Frost Blast slow holds targets inside Blade Fury; Frost Shield blunts return harass' },
+  { hero: 'crystal_maiden', target: 'ursa', lanePartnerScore: 8, reason: 'Frostbite holds the target for full Fury Swipes stacking — a kill every rotation' },
+  { hero: 'bane', target: 'sven', lanePartnerScore: 7, reason: 'Nightmare is a free 4-second setup for Storm Hammer into full God\'s Strength swings' },
+  { hero: 'witch_doctor', target: 'skeleton_king', lanePartnerScore: 7, reason: 'Paralyzing Cask into Wraithfire Blast chain-stuns for full Maledict ticks' },
+  { hero: 'oracle', target: 'doom_bringer', counterScore: 6, counterType: 'sustain_counter', reason: 'False Promise absorbs the entire Doom duration and heals it back after' },
+  { hero: 'abaddon', target: 'silencer', counterScore: 6, counterType: 'silence', reason: 'Aphotic Shield hard-dispels Global Silence and Last Word from key allies' },
+  { hero: 'huskar', target: 'muerta', counterScore: 6, counterType: 'sustain_counter', reason: 'Berserker\'s Blood magic resistance blunts Pierce the Veil — her converted damage barely dents him' },
+  { hero: 'bounty_hunter', target: 'furion', counterScore: 6, counterType: 'vision', reason: 'Track reveals Nature\'s Prophet\'s split-push rotations before they happen' },
 ];
 
 function resolveId(name: string, ctx: string): number {

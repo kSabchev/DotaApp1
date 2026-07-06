@@ -55,6 +55,11 @@ export default function MatchupItemPanel({ myPicks, enemyPicks }: Props) {
                   <span className="text-[8px] px-1 py-0.5 rounded bg-cyan-900/60 text-cyan-300 font-bold">core</span>
                 )}
               </div>
+              {rec.stackedNote && (
+                <div className="text-[10px] text-amber-300 font-medium leading-tight mt-0.5 mb-0.5">
+                  ⚠ {rec.stackedNote}
+                </div>
+              )}
               {rec.answers.slice(0, 3).map((a, i) => (
                 <div key={i} className="text-[10px] text-gray-500 leading-tight">· {a.reason}</div>
               ))}

@@ -10,7 +10,7 @@
 // Run:  npx ts-node --transpile-only src/model/recommendationBacktest.ts
 import { loadOrderedDraftsForBacktest, type DraftEvent } from '../db';
 import { getHeroPool } from '../ingest/heroPool';
-import { analyzeTeam, rankBanThreats, type RankPicksAblation } from '../../../shared/scoring';
+import { analyzeTeam, rankBanThreats, setMetaPickProvider, type RankPicksAblation } from '../../../shared/scoring';
 import { gradeMatchups } from '../../../shared/matchupGrades';
 import { computeItemMatchups } from '../../../shared/matchups';
 import type { Hero } from '../../../shared/types';
@@ -61,6 +61,19 @@ async function main() {
   const winRateOf = (id: number) => (wins.get(id) ?? 0) / Math.max(1, games.get(id) ?? 0);
   const pickCountOf = (id: number) => picks.get(id) ?? 0;
 
+  // ── Meta-popularity provider for rankPicks ─────────────────────────────────────
+  // In production this is live Immortal-bracket pick-rate data (metaService); here
+  // it is derived from the corpus's own pick counts — the SAME counts the
+  // most-picked baseline ranks by, so the engine gains no information that
+  // baseline doesn't have. Mirrors the frontend's metaPickBoost weighting.
+  const maxPickCount = Math.max(...picks.values(), 1);
+  setMetaPickProvider(heroId => {
+    const rate = pickCountOf(heroId) / maxPickCount;
+    const boost = Math.round(15 * rate);
+    return boost > 0 ? { boost, note: rate >= 0.5 ? 'Heavily picked this patch' : undefined } : { boost: 0 };
+  });
+  console.log('Meta-popularity provider registered (corpus pick rates, max boost 15).\n');
+
   // ── Replay engine: one full pass over all clean matches for a given ranker ─────
   function replay(rank: RankFn): Agreement {
     let n = 0, top1 = 0, top3 = 0, top5 = 0;
@@ -98,7 +111,7 @@ async function main() {
 
   // ── 2) Ablation study — disable one module at a time ────────────────────────────
   console.log('\n── Ablation study (Δ = Top-3 pp vs full engine) ────────────────────');
-  const modules: (keyof RankPicksAblation)[] = ['synergy', 'counter', 'roleCoverage', 'capability', 'timing'];
+  const modules: (keyof RankPicksAblation)[] = ['synergy', 'counter', 'roleCoverage', 'capability', 'timing', 'meta'];
   const ablationResults: Record<string, Agreement> = {};
   for (const mod of modules) {
     const r = replay(engineRank({ [mod]: true } as RankPicksAblation));
@@ -109,7 +122,7 @@ async function main() {
 
   // ── 3) Statistics-only baseline — counter signal only (existing "counter-picker" tools) ──
   console.log('\n── Baseline comparison ──────────────────────────────────────────────');
-  const statsOnly = replay(engineRank({ synergy: true, roleCoverage: true, capability: true, timing: true }));
+  const statsOnly = replay(engineRank({ synergy: true, roleCoverage: true, capability: true, timing: true, meta: true }));
   console.log(`Statistics-only (counter) ${fmt(statsOnly)}`);
 
   // ── 4) Naive baselines ──────────────────────────────────────────────────────────

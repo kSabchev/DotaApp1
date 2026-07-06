@@ -5,6 +5,7 @@ import matchesRouter from './routes/matches';
 import proMatchesRouter from './routes/proMatches';
 import modelRouter from './routes/model';
 import itemsRouter from './routes/items';
+import playersRouter from './routes/players';
 
 export const app = express();
 const PORT = process.env.PORT || 3001;
@@ -22,6 +23,7 @@ app.use('/api/matches', matchesRouter);
 app.use('/api/pro-matches', proMatchesRouter);
 app.use('/api/model', modelRouter);
 app.use('/api/items', itemsRouter);
+app.use('/api/players', playersRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

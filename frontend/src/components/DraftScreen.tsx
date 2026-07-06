@@ -12,10 +12,11 @@ import AnalysisPanel from './AnalysisPanel';
 import ComparisonPanel from './ComparisonPanel';
 import DraftRoleBoard from './DraftRoleBoard';
 import DraftSummary from './DraftSummary';
-import DraftImport from './DraftImport';
+import LoadMatchHub from './loadmatch/LoadMatchHub';
 import SaveDraftModal from './SaveDraftModal';
 import DraftHistoryPanel from './DraftHistoryPanel';
 import ItemTablePanel from './ItemTablePanel';
+import NavTabs from './layout/NavTabs';
 import type { Role } from '../types';
 
 export default function DraftScreen() {
@@ -102,6 +103,7 @@ export default function DraftScreen() {
         <div className="flex items-center gap-3">
           <span className="text-dota-accent font-black text-lg tracking-tight">DOTA 2</span>
           <span className="text-gray-500 font-semibold text-sm">Draft Analyzer</span>
+          <NavTabs />
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded border border-dota-border overflow-hidden text-xs">
@@ -157,7 +159,7 @@ export default function DraftScreen() {
             onClick={() => setShowImport(true)}
             className="px-3 py-1 rounded border border-dota-border text-xs text-gray-400 hover:text-dota-accent transition-colors"
           >
-            Import
+            Load Match
           </button>
           <button
             onClick={() => setShowItems(true)}
@@ -185,7 +187,7 @@ export default function DraftScreen() {
           </button>
         </div>
       </div>
-      {showImport && <DraftImport onClose={() => setShowImport(false)} />}
+      {showImport && <LoadMatchHub onClose={() => setShowImport(false)} />}
       {showSave && <SaveDraftModal onClose={() => setShowSave(false)} />}
       {showHistory && <DraftHistoryPanel onClose={() => setShowHistory(false)} />}
       {showItems && <ItemTablePanel onClose={() => setShowItems(false)} />}

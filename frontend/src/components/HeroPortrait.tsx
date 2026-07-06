@@ -46,10 +46,15 @@ export default function HeroPortrait({
       : 'ring-2 ring-dota-accent'
     : '');
 
+  // Interactive portraits (onClick) render a real <button>; presentational ones
+  // render a <div> so callers can nest them inside buttons/links without
+  // producing invalid HTML (button-in-button / button-in-anchor).
+  const Wrapper: 'button' | 'div' = onClick ? 'button' : 'div';
+
   return (
-    <button
+    <Wrapper
       onClick={onClick}
-      disabled={disabled}
+      disabled={onClick ? disabled : undefined}
       className={[
         'flex flex-col items-center gap-0.5 transition-all select-none',
         disabled ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer',
@@ -116,6 +121,6 @@ export default function HeroPortrait({
           {hero.displayName}
         </span>
       )}
-    </button>
+    </Wrapper>
   );
 }
