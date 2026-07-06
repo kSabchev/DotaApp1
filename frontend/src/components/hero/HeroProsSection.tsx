@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { selectAllHeroes } from '../../store/selectors';
 import { loadDraft } from '../../store/draftSlice';
 import { API_BASE } from '../../config';
+import { apiFetch, useBackendStatus } from '../../data/backendStatus';
 import { fetchHeroPros, type HeroProEntry } from '../../data/heroProsService';
 import { savedDraftFromMatch } from '../../data/matchImport';
 import type { Hero } from '../../types';
@@ -23,6 +24,7 @@ export default function HeroProsSection({ hero }: { hero: Hero }) {
   const [pros, setPros] = useState<HeroProEntry[] | 'loading'>('loading');
   const [loadingMatch, setLoadingMatch] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const backendStatus = useBackendStatus();
 
   useEffect(() => {
     let alive = true;
@@ -35,7 +37,7 @@ export default function HeroProsSection({ hero }: { hero: Hero }) {
     setLoadingMatch(matchId);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/matches/${matchId}`);
+      const res = await apiFetch(`${API_BASE}/matches/${matchId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const match = (await res.json()) as OpenDotaMatch;
       dispatch(loadDraft(savedDraftFromMatch(match, heroes)));
@@ -52,7 +54,13 @@ export default function HeroProsSection({ hero }: { hero: Hero }) {
       <h4 className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-3">
         Pros to Watch · Recent Replays
       </h4>
-      {pros === 'loading' && <p className="text-[10px] text-gray-600">Loading pro data…</p>}
+      {pros === 'loading' && (
+        <p className="text-[10px] text-gray-600">
+          {backendStatus === 'waking'
+            ? 'Backend is waking up (free hosting) — this can take up to a minute…'
+            : 'Loading pro data…'}
+        </p>
+      )}
       {pros !== 'loading' && pros.length === 0 && (
         <p className="text-[10px] text-gray-600">No recent pro games on this hero — it may be out of the current pro meta.</p>
       )}

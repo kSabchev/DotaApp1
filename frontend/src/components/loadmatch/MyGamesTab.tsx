@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { selectAllHeroes } from '../../store/selectors';
 import { loadDraft } from '../../store/draftSlice';
 import { API_BASE } from '../../config';
+import { apiFetch, useBackendStatus } from '../../data/backendStatus';
 import { getPlayerIdentity, setPlayerIdentity, clearPlayerIdentity, type PlayerIdentity } from '../../data/playerIdentity';
 import { fetchRecentMatches, type RecentMatchSummary } from '../../data/playerMatchesService';
 import { savedDraftFromMatch } from '../../data/matchImport';
@@ -27,6 +28,7 @@ export default function MyGamesTab({ onLoaded }: { onLoaded: () => void }) {
   const [loading, setLoading] = useState(false);
   const [loadingMatch, setLoadingMatch] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const backendStatus = useBackendStatus();
 
   useEffect(() => {
     if (!identity) return;
@@ -60,7 +62,7 @@ export default function MyGamesTab({ onLoaded }: { onLoaded: () => void }) {
     setLoadingMatch(matchId);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/matches/${matchId}`);
+      const res = await apiFetch(`${API_BASE}/matches/${matchId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const match = (await res.json()) as OpenDotaMatch;
       dispatch(loadDraft(savedDraftFromMatch(match, heroes)));
@@ -111,7 +113,13 @@ export default function MyGamesTab({ onLoaded }: { onLoaded: () => void }) {
         <button onClick={unlink} className="text-[10px] text-gray-500 hover:text-red-400 transition-colors">unlink</button>
       </div>
 
-      {loading && <p className="text-gray-500 text-xs py-4 text-center">Loading recent games…</p>}
+      {loading && (
+        <p className="text-gray-500 text-xs py-4 text-center">
+          {backendStatus === 'waking'
+            ? 'Backend is waking up (free hosting) — this can take up to a minute…'
+            : 'Loading recent games…'}
+        </p>
+      )}
       {error && <div className="text-red-400 text-xs bg-red-950/30 border border-red-900/50 rounded p-2">{error}</div>}
       {matches && matches.length === 0 && !loading && (
         <p className="text-gray-500 text-xs py-4 text-center">

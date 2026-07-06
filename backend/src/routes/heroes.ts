@@ -42,6 +42,23 @@ router.get('/', async (_req, res) => {
   }
 });
 
+// Boot-time cache priming (cold-start mitigation): the first request after the
+// free-tier host wakes is what booted the process, so prime the hot read-side
+// caches immediately — by the time the user's follow-up calls arrive, the hero
+// list, meta stats, and the multi-MB proPlayers map are already in memory.
+// Sequential on purpose (gentle on OpenDota's rate limit).
+export async function warmHeroCaches(): Promise<void> {
+  if (!heroCache) {
+    const r = await odFetch(`${OPENDOTA}/heroes`);
+    if (r.ok) heroCache = { data: await r.json(), ts: Date.now() };
+  }
+  if (!statsCache) {
+    const r = await odFetch(`${OPENDOTA}/heroStats`);
+    if (r.ok) statsCache = { data: await r.json(), ts: Date.now() };
+  }
+  await getProPlayersMap();
+}
+
 router.get('/stats', async (_req, res) => {
   try {
     if (statsCache && Date.now() - statsCache.ts < STATS_TTL) {

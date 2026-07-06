@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { selectAllHeroes } from '../../store/selectors';
 import { loadDraft } from '../../store/draftSlice';
 import { API_BASE } from '../../config';
+import { apiFetch } from '../../data/backendStatus';
 import { savedDraftFromMatch, matchHasCmDraft } from '../../data/matchImport';
 import type { OpenDotaMatch } from '../../services/api';
 
@@ -21,7 +22,7 @@ export default function MatchIdTab({ onLoaded }: { onLoaded: () => void }) {
     setError(null);
     setPreview(null);
     try {
-      const res = await fetch(`${API_BASE}/matches/${matchId.trim()}`);
+      const res = await apiFetch(`${API_BASE}/matches/${matchId.trim()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as OpenDotaMatch;
       if (!data?.match_id) throw new Error('Match not found');

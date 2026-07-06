@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { selectAllHeroes } from '../../store/selectors';
 import { loadDraft } from '../../store/draftSlice';
 import { API_BASE } from '../../config';
+import { apiFetch } from '../../data/backendStatus';
 import { useGetProMatchesQuery, type OpenDotaMatch } from '../../services/api';
 import { savedDraftFromMatch } from '../../data/matchImport';
 
@@ -24,7 +25,7 @@ export default function ProMatchesTab({ onLoaded }: { onLoaded: () => void }) {
     setLoadingMatch(matchId);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/matches/${matchId}`);
+      const res = await apiFetch(`${API_BASE}/matches/${matchId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const match = (await res.json()) as OpenDotaMatch;
       dispatch(loadDraft(savedDraftFromMatch(match, heroes)));

@@ -369,6 +369,19 @@ The space-economy note (`heroTraits.ts`) and the Team Identity greed warning cou
 - **Cross-reference**: when the economy is strained, the capability panel's space note points to *"Who and how: Team Identity below."*
 - 111 tests — including a new one proving the provider-downgrade agrees with the space rating (no more contradictions by construction).
 
+### Session 28 — Cold-start mitigation (free-tier hosting)
+Render's free instance sleeps after ~15 idle minutes and takes 20–60 s to wake (measured: 22 s). Previously every boot loader failed once during that window and never retried — the whole session was left on the 39-hero fallback pool with no meta tiers and no win model. Three-layer fix, verified by simulating a cold start locally (frontend up, backend down, backend started mid-session):
+- **Frontend wake layer (`frontend/src/data/backendStatus.ts`)** — pings `/api/health` at page load (the ping itself is what triggers the wake), retries up to ~90 s, and broadcasts a status (`waking`/`ok`/`down`) via a `useBackendStatus()` hook. When it flips to `ok`: the hero-pool query refetches (39 → 127 heroes without a reload), `loadMeta`/`loadWinModel` re-run (idempotent), and the live-data version bumps so open analyses recompute. An `apiFetch` wrapper used by all data services waits out the wake window and retries once instead of failing; MyGamesTab and the pros section show *"Backend is waking up (free hosting) — this can take up to a minute…"* instead of a misleading empty state.
+- **Server boot warm-up** — on startup (which on the free tier means "a user just woke us") the backend primes the hero list, hero stats, the multi-MB proPlayers map, and item constants, so follow-up requests hit memory: the "first pros fetch of the day is slow" problem disappears.
+- **Keep-alive workflow (`.github/workflows/keepalive.yml`)** — GitHub Actions pings health every 12 minutes, normally preventing the sleep entirely (fits Render's 750 free instance-hours/month; auto-disables after 60 days of repo inactivity — documented in DEPLOY.md §6).
+
+### Session 29 — Bundle code-splitting
+Cleared the 500 kB chunk warning (main chunk had grown to 700 kB minified):
+- **Lazy routes** — the three info pages (`HeroIndexPage`, `HeroDetailPage`, `TipsPage`) and the `LoadMatchHub` modal load on demand via `React.lazy`/`Suspense`; the draft screen stays in the main chunk. Verified in a production `vite preview` (added a `frontend-preview` launch config): each chunk is fetched exactly when its route/button is first used.
+- **Vendor split** — `manualChunks` in `vite.config.ts` (function form — rolldown-vite's types don't accept the object form) separates node_modules from app code: vendor 306 kB / app 346 kB / lazy pages 2–17 kB each, all under the threshold; the vendor chunk stays browser-cached across app deploys.
+- **`vite preview` CORS** — the backend's default allowed origins now include `http://localhost:4173` so the production build can be smoke-tested locally.
+- Net effect: initial load 200 → ~187 kB gzip (pages + hub deferred), warning gone, and the production preview run incidentally re-verified the cold-start wake layer end-to-end (health retries → recovery refetches visible in the network log).
+
 ---
 
 ## File Map

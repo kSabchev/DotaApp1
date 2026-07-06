@@ -67,3 +67,25 @@ Open the Vercel URL and confirm:
 `CORS_ORIGIN` and `VITE_API_BASE` both default to the existing localhost
 setup when unset, so `npm run dev` in each folder still works exactly as
 before with no env vars required.
+
+## 6. Cold starts (free tier)
+
+Render's free instances sleep after ~15 minutes without traffic and take
+20–60 s to wake. Three mitigations are in place:
+
+- **Keep-alive workflow** — `.github/workflows/keepalive.yml` pings
+  `/api/health` every 12 minutes from GitHub Actions, which normally prevents
+  the sleep entirely. One always-on service fits in Render's 750 free
+  instance-hours/month. Two caveats: GitHub schedules are best-effort (runs
+  can be delayed), and GitHub disables scheduled workflows after 60 days
+  without repo activity — any commit (or a manual "Run workflow" click on the
+  Actions tab) re-enables it.
+- **Frontend wake handling** — the app pings `/api/health` at page load
+  (starting the wake immediately), retries for up to ~90 s, and re-runs the
+  boot loaders (hero pool, meta stats, win model) once the backend answers.
+  Data panels show "Backend is waking up (free hosting)…" instead of a
+  misleading error/empty state, and API fetches wait out the wake window and
+  retry instead of failing once.
+- **Server boot warm-up** — on startup the backend primes its hot caches
+  (hero list, hero stats, the multi-MB proPlayers map, item constants), so by
+  the time the user's follow-up requests arrive they hit memory.

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectDraft, selectRadiantPicks, selectDirePicks, selectAvailableHeroes, selectAllHeroes } from '../store/selectors';
 import { undoLastPick, resetDraft, setMode, setBansEnabled, setStartingTeam } from '../store/draftSlice';
@@ -12,7 +12,9 @@ import AnalysisPanel from './AnalysisPanel';
 import ComparisonPanel from './ComparisonPanel';
 import DraftRoleBoard from './DraftRoleBoard';
 import DraftSummary from './DraftSummary';
-import LoadMatchHub from './loadmatch/LoadMatchHub';
+// Modal shown only on demand — lazy keeps the hub (4 tabs + showcase data) out
+// of the initial bundle.
+const LoadMatchHub = lazy(() => import('./loadmatch/LoadMatchHub'));
 import SaveDraftModal from './SaveDraftModal';
 import DraftHistoryPanel from './DraftHistoryPanel';
 import ItemTablePanel from './ItemTablePanel';
@@ -187,7 +189,11 @@ export default function DraftScreen() {
           </button>
         </div>
       </div>
-      {showImport && <LoadMatchHub onClose={() => setShowImport(false)} />}
+      {showImport && (
+        <Suspense fallback={null}>
+          <LoadMatchHub onClose={() => setShowImport(false)} />
+        </Suspense>
+      )}
       {showSave && <SaveDraftModal onClose={() => setShowSave(false)} />}
       {showHistory && <DraftHistoryPanel onClose={() => setShowHistory(false)} />}
       {showItems && <ItemTablePanel onClose={() => setShowItems(false)} />}

@@ -3,6 +3,7 @@
 // item-constants map. Cached per hero for the session.
 import { itemIconUrl } from '../../../shared/items';
 import { API_BASE as BACKEND } from '../config';
+import { apiFetch } from './backendStatus';
 
 export interface BuildItem {
   id: number;
@@ -35,7 +36,7 @@ export function getItemConstants(): Record<number, { key: string; name: string }
 export async function loadItemConstants(): Promise<void> {
   if (constants) return;
   try {
-    const r = await fetch(`${BACKEND}/items`);
+    const r = await apiFetch(`${BACKEND}/items`);
     if (r.ok) constants = await r.json();
   } catch { /* offline — builds simply won't show */ }
 }
@@ -58,7 +59,7 @@ export async function getHeroBuild(heroId: number): Promise<HeroBuild | null> {
   await loadItemConstants();
   if (buildCache.has(heroId)) return buildCache.get(heroId)!;
   try {
-    const r = await fetch(`${BACKEND}/heroes/${heroId}/items`);
+    const r = await apiFetch(`${BACKEND}/heroes/${heroId}/items`);
     if (!r.ok) { buildCache.set(heroId, null); return null; }
     const d = await r.json();
     const build: HeroBuild = {
