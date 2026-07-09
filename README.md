@@ -382,6 +382,18 @@ Cleared the 500 kB chunk warning (main chunk had grown to 700 kB minified):
 - **`vite preview` CORS** — the backend's default allowed origins now include `http://localhost:4173` so the production build can be smoke-tested locally.
 - Net effect: initial load 200 → ~187 kB gzip (pages + hub deferred), warning gone, and the production preview run incidentally re-verified the cold-start wake layer end-to-end (health retries → recovery refetches visible in the network log).
 
+### Session 30 — Imported-match scoreboard
+When a draft is loaded from a real match (any Load Match tab or an encyclopedia replay chip), a collapsible scoreboard now appears **above the draft analysis**: winner (team name, colored by side), kill score, duration and league in the always-visible header; per-hero rows with player name, K/D/A (deaths highlighted), GPM, XPM, and the final six-slot inventory as item icons.
+- **Captured at import time** — `buildImportedMatchInfo()` in `matchImport.ts` extracts the stats from the OpenDota payload the importer already had; stored as `draft.importedMatch` in Redux via `setImportedMatch`, dispatched by all four import flows.
+- **Cleared everywhere it should be** — `loadDraft` resets it (so showcase drafts and saved-draft history loads never show a stale scoreboard), as do reset/mode/starting-team changes.
+- **Item icons** resolve numeric ids through the existing item-constants map (`heroBuildService`), with a graceful placeholder until it loads; narrow screens get horizontal scroll.
+- Verified live with TI-qualifier match 8863619325 (Nigma Galaxy 26:9, Miracle- 634 GPM Magnus, 51 item icons resolved): panel above the analysis, collapse/expand works, New Draft clears it, zero console errors.
+
+### Session 31 — Import-path and identity-role fixes
+Two known rough edges closed:
+- **AP/Turbo matches no longer import as fake Captains Mode drafts.** OpenDota synthesizes a `picks_bans` array even for non-draft modes (ranked All Pick ban votes, Turbo pick order), so presence alone doesn't mean the match had a real draft. `usesCmDraftPath()` now gates the picks_bans path on `game_mode` (2 = Captains Mode, 16 = Captains Draft); every other mode reconstructs picks-only from the players array with an accurate banner ("Not a Captains Mode draft — picks imported from the players list"). Unknown `game_mode` (older payloads) keeps the presence-based behavior. Verified live: a ranked AP match imports as a 10-slot picks-only manual draft (scoreboard intact), the TI-qualifier CM match still imports as the full 24-slot draft with real bans.
+- **Team Identity now respects the role board.** `computeTeamIdentity(picks, roleAssignments)` — user-assigned roles take precedence over the hero's default `metaRole` in the support-mobility check, so a hero repositioned to pos4/5 counts as part of the support cast (and vice versa). Covered by a test where role-board-assigned support Mirana is credited as a roamer while default-metaRole Mirana is not. 112 tests.
+
 ---
 
 ## File Map

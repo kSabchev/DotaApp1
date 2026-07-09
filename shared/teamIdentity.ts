@@ -6,14 +6,14 @@
 // shared/heroTraits.ts (which keeps the counts-and-balance voice): it reads the
 // same provider data, so the two panels can never contradict each other — a
 // greedy cast with a space-creator is an "info" plan, not a warning.
-import type { Hero, Playstyle, TeamIdentity, TeamIdentityMember, TeamIdentityNote } from './types';
+import type { Hero, Playstyle, Role, TeamIdentity, TeamIdentityMember, TeamIdentityNote } from './types';
 import { getHeroPlaystyles } from './heroPlaystyles';
 import { computeTeamTraits } from './heroTraits';
 
 const names = (ms: TeamIdentityMember[]) => ms.map(m => m.displayName).join(', ');
 const ids = (ms: TeamIdentityMember[]) => ms.map(m => m.heroId);
 
-export function computeTeamIdentity(picks: Hero[]): TeamIdentity {
+export function computeTeamIdentity(picks: Hero[], assignments: Record<number, Role> = {}): TeamIdentity {
   const members: TeamIdentityMember[] = picks.map(h => ({
     heroId: h.id,
     displayName: h.displayName,
@@ -134,7 +134,14 @@ export function computeTeamIdentity(picks: Hero[]): TeamIdentity {
   }
 
   // ── support mobility: do the pos4/5s move around the map? ──
-  const supports = picks.filter(h => h.metaRole === 'pos4' || h.metaRole === 'pos5');
+  // User-assigned roles (the role board) take precedence over the hero's
+  // default metaRole — a hero repositioned to support counts as one.
+  const isSupport = (h: Hero): boolean => {
+    const assigned = assignments[h.id];
+    if (assigned) return assigned === 'support' || assigned === 'hard_support';
+    return h.metaRole === 'pos4' || h.metaRole === 'pos5';
+  };
+  const supports = picks.filter(isSupport);
   if (supports.length >= 2) {
     const roamers = supports.filter(h =>
       members.find(m => m.heroId === h.id)?.playstyles.includes('roamer'),

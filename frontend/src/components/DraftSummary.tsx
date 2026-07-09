@@ -20,6 +20,7 @@ import GamePlanTimelinePanel from './GamePlanTimelinePanel';
 import TeamIdentityPanel from './TeamIdentityPanel';
 import HeroFreedomPanel from './HeroFreedomPanel';
 import CapabilityPanel from './CapabilityPanel';
+import ImportedMatchPanel from './ImportedMatchPanel';
 import RolePicker from './RolePicker';
 
 export default function DraftSummary() {
@@ -78,6 +79,9 @@ export default function DraftSummary() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 flex flex-col gap-6">
+      {/* Real-match scoreboard (only when this draft came from an imported match) */}
+      <ImportedMatchPanel />
+
       <h2 className="text-2xl font-black text-dota-accent text-center">Draft Analysis</h2>
 
       {/* Predicted win probability (trained model — draft signal only) */}

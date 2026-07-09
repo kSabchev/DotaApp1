@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { selectAllHeroes } from '../../store/selectors';
-import { loadDraft } from '../../store/draftSlice';
+import { loadDraft, setImportedMatch } from '../../store/draftSlice';
 import { API_BASE } from '../../config';
 import { apiFetch, useBackendStatus } from '../../data/backendStatus';
 import { getPlayerIdentity, setPlayerIdentity, clearPlayerIdentity, type PlayerIdentity } from '../../data/playerIdentity';
 import { fetchRecentMatches, type RecentMatchSummary } from '../../data/playerMatchesService';
-import { savedDraftFromMatch } from '../../data/matchImport';
+import { savedDraftFromMatch, buildImportedMatchInfo } from '../../data/matchImport';
 import type { OpenDotaMatch } from '../../services/api';
 import HeroPortrait from '../HeroPortrait';
 
@@ -66,6 +66,7 @@ export default function MyGamesTab({ onLoaded }: { onLoaded: () => void }) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const match = (await res.json()) as OpenDotaMatch;
       dispatch(loadDraft(savedDraftFromMatch(match, heroes)));
+      dispatch(setImportedMatch(buildImportedMatchInfo(match)));
       onLoaded();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load match');

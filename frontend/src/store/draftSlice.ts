@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import type { DraftSlot, DraftTeam, Role } from '../types';
 import type { SavedDraft } from '../data/draftStorage';
+import type { ImportedMatchInfo } from '../data/matchImport';
 import { buildCaptainsModeOrder, MANUAL_ORDER, MANUAL_PICKS_ONLY_ORDER } from '../data/draftOrder';
 
 interface DraftState {
@@ -13,6 +14,9 @@ interface DraftState {
   bansEnabled: boolean;
   startingTeam: DraftTeam;
   roleAssignments: Record<number, Role>; // heroId -> assigned role
+  // Real-match scoreboard captured at import time (winner, K/D/A, items, GPM/XPM).
+  // null for hand-built drafts, showcase drafts, and saved-draft loads.
+  importedMatch: ImportedMatchInfo | null;
 }
 
 const buildSlots = (order: Omit<DraftSlot, 'heroId'>[]): DraftSlot[] =>
@@ -32,6 +36,7 @@ const initialState: DraftState = {
   bansEnabled: true,
   startingTeam: 'radiant',
   roleAssignments: {},
+  importedMatch: null,
 };
 
 const draftSlice = createSlice({
@@ -72,6 +77,7 @@ const draftSlice = createSlice({
       state.history = [];
       state.phase = 'drafting';
       state.roleAssignments = {};
+      state.importedMatch = null;
     },
     setMode(state, action: PayloadAction<'captains' | 'manual'>) {
       state.mode = action.payload;
@@ -80,6 +86,7 @@ const draftSlice = createSlice({
       state.history = [];
       state.phase = 'drafting';
       state.roleAssignments = {};
+      state.importedMatch = null;
     },
     setBansEnabled(state, action: PayloadAction<boolean>) {
       if (state.mode !== 'manual') return;
@@ -89,6 +96,7 @@ const draftSlice = createSlice({
       state.history = [];
       state.phase = 'drafting';
       state.roleAssignments = {};
+      state.importedMatch = null;
     },
     setStartingTeam(state, action: PayloadAction<DraftTeam>) {
       state.startingTeam = action.payload;
@@ -97,9 +105,13 @@ const draftSlice = createSlice({
       state.history = [];
       state.phase = 'drafting';
       state.roleAssignments = {};
+      state.importedMatch = null;
     },
     assignRole(state, action: PayloadAction<{ heroId: number; role: Role }>) {
       state.roleAssignments[action.payload.heroId] = action.payload.role;
+    },
+    setImportedMatch(state, action: PayloadAction<ImportedMatchInfo | null>) {
+      state.importedMatch = action.payload;
     },
     loadDraft(state, action: PayloadAction<SavedDraft>) {
       const d = action.payload;
@@ -107,6 +119,8 @@ const draftSlice = createSlice({
       state.startingTeam = d.startingTeam;
       state.slots = d.slots;
       state.roleAssignments = d.roleAssignments;
+      // Cleared on every load; match-import flows dispatch setImportedMatch right after.
+      state.importedMatch = null;
       // Reconstruct history from filled slots
       state.history = d.slots
         .map((s, i) => (s.heroId !== null ? { slotIndex: i, heroId: s.heroId } : null))
@@ -120,5 +134,5 @@ const draftSlice = createSlice({
   },
 });
 
-export const { selectHero, undoLastPick, resetDraft, setMode, setBansEnabled, setStartingTeam, assignRole, loadDraft } = draftSlice.actions;
+export const { selectHero, undoLastPick, resetDraft, setMode, setBansEnabled, setStartingTeam, assignRole, loadDraft, setImportedMatch } = draftSlice.actions;
 export default draftSlice.reducer;

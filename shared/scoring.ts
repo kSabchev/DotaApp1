@@ -1670,7 +1670,7 @@ export function analyzeTeam(
   // Capability profile — single source of truth for win conditions + the radar.
   const capabilities = computeTeamCapabilities(myPicks, physicalStackScore);
   const traits = computeTeamTraits(myPicks);
-  const identity = computeTeamIdentity(myPicks);
+  const identity = computeTeamIdentity(myPicks, roleAssignments);
 
   // Win conditions (a named summary of the capability profile)
   const winConditions = detectWinConditions(myPicks, physicalStackScore, capabilities);

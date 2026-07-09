@@ -20,6 +20,8 @@ export interface OpenDotaMatch {
   radiant_win: boolean;
   duration: number;
   start_time: number;
+  game_mode?: number;   // OpenDota enum: 2 = Captains Mode, 16 = Captains Draft, 22 = ranked AP, 23 = Turbo
+  lobby_type?: number;
   radiant_team?: { name: string; tag: string };
   dire_team?: { name: string; tag: string };
   league?: { name: string };
@@ -48,6 +50,15 @@ export interface MatchPlayer {
   assists: number;
   net_worth: number;
   hero_damage: number;
+  gold_per_min?: number;
+  xp_per_min?: number;
+  level?: number;
+  item_0?: number;        // final inventory, numeric item ids (0 = empty slot)
+  item_1?: number;
+  item_2?: number;
+  item_3?: number;
+  item_4?: number;
+  item_5?: number;
 }
 
 export interface ProMatch {

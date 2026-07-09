@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { selectAllHeroes } from '../../store/selectors';
-import { loadDraft } from '../../store/draftSlice';
+import { loadDraft, setImportedMatch } from '../../store/draftSlice';
 import { API_BASE } from '../../config';
 import { apiFetch } from '../../data/backendStatus';
-import { savedDraftFromMatch, matchHasCmDraft } from '../../data/matchImport';
+import { savedDraftFromMatch, usesCmDraftPath, buildImportedMatchInfo } from '../../data/matchImport';
 import type { OpenDotaMatch } from '../../services/api';
 
 /** Paste any Dota 2 match ID (Dotabuff/OpenDota) and load its draft. */
@@ -37,11 +37,12 @@ export default function MatchIdTab({ onLoaded }: { onLoaded: () => void }) {
   function importDraft() {
     if (!preview) return;
     dispatch(loadDraft(savedDraftFromMatch(preview, heroes)));
+    dispatch(setImportedMatch(buildImportedMatchInfo(preview)));
     onLoaded();
   }
 
   const heroName = (id: number) => heroes.find(h => h.id === id)?.displayName ?? `#${id}`;
-  const isCm = preview ? matchHasCmDraft(preview) : false;
+  const isCm = preview ? usesCmDraftPath(preview) : false;
 
   const radiantPicks = preview
     ? isCm
@@ -89,7 +90,7 @@ export default function MatchIdTab({ onLoaded }: { onLoaded: () => void }) {
         <div className="flex flex-col gap-3">
           {!isCm && (
             <div className="text-amber-300 text-[10px] bg-amber-950/30 border border-amber-900/50 rounded p-2">
-              No Captains Mode draft data in this match — picks reconstructed from the players list (no bans, manual mode).
+              Not a Captains Mode draft — picks imported from the players list (no ban sequence, manual mode).
             </div>
           )}
           <div className="bg-dota-bg rounded-lg p-3 border border-dota-border">

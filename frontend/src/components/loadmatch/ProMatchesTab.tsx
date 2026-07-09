@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { selectAllHeroes } from '../../store/selectors';
-import { loadDraft } from '../../store/draftSlice';
+import { loadDraft, setImportedMatch } from '../../store/draftSlice';
 import { API_BASE } from '../../config';
 import { apiFetch } from '../../data/backendStatus';
 import { useGetProMatchesQuery, type OpenDotaMatch } from '../../services/api';
-import { savedDraftFromMatch } from '../../data/matchImport';
+import { savedDraftFromMatch, buildImportedMatchInfo } from '../../data/matchImport';
 
 function timeAgo(unixSec: number): string {
   const hours = Math.floor((Date.now() / 1000 - unixSec) / 3600);
@@ -29,6 +29,7 @@ export default function ProMatchesTab({ onLoaded }: { onLoaded: () => void }) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const match = (await res.json()) as OpenDotaMatch;
       dispatch(loadDraft(savedDraftFromMatch(match, heroes)));
+      dispatch(setImportedMatch(buildImportedMatchInfo(match)));
       onLoaded();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load match');

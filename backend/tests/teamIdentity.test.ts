@@ -95,6 +95,23 @@ test('roaming supports are credited under support mobility', () => {
   assert.match(mob!.detail, /Tusk/);
 });
 
+test('role-board assignments override metaRole for support mobility', () => {
+  // Mirana defaults to a core metaRole (helpers: carry → pos1) but is assigned
+  // pos4 on the role board — her roamer playstyle must now count.
+  const mirana = hero('mirana', 9, 'carry', 'Mirana');
+  const assignments = { [mirana.id]: 'support' as const, [cm.id]: 'hard_support' as const };
+  const id = computeTeamIdentity([am, magnus, tide, mirana, cm], assignments);
+  const mob = id.notes.find(n => n.kind === 'support_mobility');
+  assert.ok(mob, 'expected a support mobility note');
+  assert.equal(mob!.severity, 'good');
+  assert.match(mob!.detail, /Mirana/);
+
+  // Without the assignment her default core metaRole hides her from the check.
+  const without = computeTeamIdentity([am, magnus, tide, mirana, cm]);
+  const mobWithout = without.notes.find(n => n.kind === 'support_mobility');
+  if (mobWithout) assert.doesNotMatch(mobWithout.detail, /Mirana/);
+});
+
 test('warnings sort before info and good notes', () => {
   const id = computeTeamIdentity([am, medusa, spectre, terrorblade, invoker]);
   const sev = id.notes.map(n => n.severity);

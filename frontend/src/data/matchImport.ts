@@ -15,6 +15,80 @@ export function matchHasCmDraft(match: OpenDotaMatch): boolean {
   return Array.isArray(match.picks_bans) && match.picks_bans.length > 0;
 }
 
+// OpenDota synthesizes a picks_bans array even for non-draft modes (ranked All
+// Pick ban votes, Turbo pick order), so its presence alone doesn't mean the
+// match had a real draft. Use the picks_bans path only for actual draft modes —
+// Captains Mode (2) and Captains Draft (16); everything else reconstructs
+// picks-only from the players array. Unknown game_mode (older payloads) keeps
+// the old presence-based behavior.
+const DRAFT_GAME_MODES = new Set([2, 16]);
+
+export function usesCmDraftPath(match: OpenDotaMatch): boolean {
+  if (!matchHasCmDraft(match)) return false;
+  if (match.game_mode === undefined) return true;
+  return DRAFT_GAME_MODES.has(match.game_mode);
+}
+
+// ── Imported-match scoreboard ─────────────────────────────────────────────────
+// The draft slots only need hero ids, but an imported real match also carries
+// the outcome and per-player performance — captured here at import time and
+// shown in a collapsible panel above the draft analysis.
+
+export interface ImportedPlayerStats {
+  heroId: number;
+  isRadiant: boolean;
+  playerName: string | null;
+  kills: number;
+  deaths: number;
+  assists: number;
+  gpm: number;
+  xpm: number;
+  level: number | null;
+  itemIds: number[];   // final inventory (empty slots filtered out)
+}
+
+export interface ImportedMatchInfo {
+  matchId: number;
+  radiantWin: boolean;
+  durationSec: number;
+  radiantScore: number | null;
+  direScore: number | null;
+  radiantTeamName: string | null;
+  direTeamName: string | null;
+  leagueName: string | null;
+  players: ImportedPlayerStats[];
+}
+
+export function buildImportedMatchInfo(match: OpenDotaMatch): ImportedMatchInfo {
+  const players: ImportedPlayerStats[] = (match.players ?? [])
+    .filter(p => p && p.hero_id > 0)
+    .map(p => ({
+      heroId: p.hero_id,
+      isRadiant: playerIsRadiant(p),
+      playerName: p.personaname ?? null,
+      kills: p.kills ?? 0,
+      deaths: p.deaths ?? 0,
+      assists: p.assists ?? 0,
+      gpm: p.gold_per_min ?? 0,
+      xpm: p.xp_per_min ?? 0,
+      level: p.level ?? null,
+      itemIds: [p.item_0, p.item_1, p.item_2, p.item_3, p.item_4, p.item_5]
+        .filter((id): id is number => typeof id === 'number' && id > 0),
+    }));
+
+  return {
+    matchId: match.match_id,
+    radiantWin: match.radiant_win,
+    durationSec: match.duration ?? 0,
+    radiantScore: match.radiant_score ?? null,
+    direScore: match.dire_score ?? null,
+    radiantTeamName: match.radiant_team?.name ?? null,
+    direTeamName: match.dire_team?.name ?? null,
+    leagueName: match.league?.name ?? null,
+    players,
+  };
+}
+
 function playerIsRadiant(p: { player_slot?: number; isRadiant?: boolean; team_number?: 0 | 1 }): boolean {
   if (typeof p.player_slot === 'number') return p.player_slot < 128;
   if (typeof p.isRadiant === 'boolean') return p.isRadiant;
@@ -28,7 +102,7 @@ export function savedDraftFromMatch(match: OpenDotaMatch, heroes: Hero[]): Saved
   let mode: 'captains' | 'manual';
   let startingTeam: 'radiant' | 'dire';
 
-  if (matchHasCmDraft(match)) {
+  if (usesCmDraftPath(match)) {
     // Build slots directly from OpenDota data — phase and team come from the
     // match, NOT from our hardcoded CM order (tournament formats can differ).
     const sorted = [...match.picks_bans!].sort((a, b) => a.order - b.order);
