@@ -58,3 +58,13 @@ test('GET /api/heroes/:id/pros rejects non-numeric ids', async () => {
     assert.match(JSON.parse(res.body).error, /hero id/i);
   });
 });
+
+test('GET /api/meta/pro serves the tournament-meta artifact (local file, offline-safe)', async () => {
+  await withServer(async port => {
+    const res = await get(port, '/api/meta/pro');
+    assert.equal(res.status, 200);
+    const meta = JSON.parse(res.body);
+    assert.ok(meta.matches > 0);
+    assert.ok(Object.keys(meta.heroes).length > 0);
+  });
+});

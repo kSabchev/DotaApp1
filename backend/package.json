@@ -11,7 +11,8 @@
     "backtest": "ts-node --transpile-only src/backtest/run.ts",
     "train": "ts-node --transpile-only src/model/train.ts",
     "checkmatchups": "ts-node --transpile-only src/checks/itemMatchups.ts",
-    "test": "ts-node --transpile-only tests/run.ts"
+    "test": "ts-node --transpile-only tests/run.ts",
+    "prometa": "ts-node --transpile-only src/model/buildProMeta.ts"
   },
   "keywords": [],
   "author": "",

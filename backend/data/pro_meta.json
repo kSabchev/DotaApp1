@@ -1,0 +1,1153 @@
+{
+ "generatedAt": "2026-07-11T08:59:02.935Z",
+ "windowDays": 30,
+ "from": "2026-06-13",
+ "to": "2026-07-10",
+ "matches": 569,
+ "leagues": 11,
+ "heroes": {
+  "1": {
+   "picks": 4,
+   "bans": 10,
+   "wins": 0,
+   "pickRate": 0.007,
+   "banRate": 0.0176,
+   "contestRate": 0.0246,
+   "winRate": 0
+  },
+  "2": {
+   "picks": 129,
+   "bans": 235,
+   "wins": 59,
+   "pickRate": 0.2267,
+   "banRate": 0.413,
+   "contestRate": 0.6397,
+   "winRate": 0.4574
+  },
+  "3": {
+   "picks": 153,
+   "bans": 167,
+   "wins": 93,
+   "pickRate": 0.2689,
+   "banRate": 0.2935,
+   "contestRate": 0.5624,
+   "winRate": 0.6078
+  },
+  "4": {
+   "picks": 3,
+   "bans": 1,
+   "wins": 2,
+   "pickRate": 0.0053,
+   "banRate": 0.0018,
+   "contestRate": 0.007,
+   "winRate": 0.6667
+  },
+  "5": {
+   "picks": 11,
+   "bans": 0,
+   "wins": 4,
+   "pickRate": 0.0193,
+   "banRate": 0,
+   "contestRate": 0.0193,
+   "winRate": 0.3636
+  },
+  "6": {
+   "picks": 133,
+   "bans": 305,
+   "wins": 60,
+   "pickRate": 0.2337,
+   "banRate": 0.536,
+   "contestRate": 0.7698,
+   "winRate": 0.4511
+  },
+  "7": {
+   "picks": 8,
+   "bans": 2,
+   "wins": 5,
+   "pickRate": 0.0141,
+   "banRate": 0.0035,
+   "contestRate": 0.0176,
+   "winRate": 0.625
+  },
+  "8": {
+   "picks": 11,
+   "bans": 8,
+   "wins": 6,
+   "pickRate": 0.0193,
+   "banRate": 0.0141,
+   "contestRate": 0.0334,
+   "winRate": 0.5455
+  },
+  "9": {
+   "picks": 33,
+   "bans": 5,
+   "wins": 19,
+   "pickRate": 0.058,
+   "banRate": 0.0088,
+   "contestRate": 0.0668,
+   "winRate": 0.5758
+  },
+  "10": {
+   "picks": 6,
+   "bans": 2,
+   "wins": 3,
+   "pickRate": 0.0105,
+   "banRate": 0.0035,
+   "contestRate": 0.0141,
+   "winRate": 0.5
+  },
+  "11": {
+   "picks": 164,
+   "bans": 292,
+   "wins": 95,
+   "pickRate": 0.2882,
+   "banRate": 0.5132,
+   "contestRate": 0.8014,
+   "winRate": 0.5793
+  },
+  "12": {
+   "picks": 15,
+   "bans": 38,
+   "wins": 9,
+   "pickRate": 0.0264,
+   "banRate": 0.0668,
+   "contestRate": 0.0931,
+   "winRate": 0.6
+  },
+  "13": {
+   "picks": 114,
+   "bans": 335,
+   "wins": 61,
+   "pickRate": 0.2004,
+   "banRate": 0.5888,
+   "contestRate": 0.7891,
+   "winRate": 0.5351
+  },
+  "14": {
+   "picks": 18,
+   "bans": 10,
+   "wins": 9,
+   "pickRate": 0.0316,
+   "banRate": 0.0176,
+   "contestRate": 0.0492,
+   "winRate": 0.5
+  },
+  "15": {
+   "picks": 6,
+   "bans": 5,
+   "wins": 3,
+   "pickRate": 0.0105,
+   "banRate": 0.0088,
+   "contestRate": 0.0193,
+   "winRate": 0.5
+  },
+  "16": {
+   "picks": 4,
+   "bans": 3,
+   "wins": 1,
+   "pickRate": 0.007,
+   "banRate": 0.0053,
+   "contestRate": 0.0123,
+   "winRate": 0.25
+  },
+  "17": {
+   "picks": 108,
+   "bans": 113,
+   "wins": 47,
+   "pickRate": 0.1898,
+   "banRate": 0.1986,
+   "contestRate": 0.3884,
+   "winRate": 0.4352
+  },
+  "18": {
+   "picks": 20,
+   "bans": 4,
+   "wins": 14,
+   "pickRate": 0.0351,
+   "banRate": 0.007,
+   "contestRate": 0.0422,
+   "winRate": 0.7
+  },
+  "19": {
+   "picks": 123,
+   "bans": 114,
+   "wins": 55,
+   "pickRate": 0.2162,
+   "banRate": 0.2004,
+   "contestRate": 0.4165,
+   "winRate": 0.4472
+  },
+  "20": {
+   "picks": 26,
+   "bans": 14,
+   "wins": 14,
+   "pickRate": 0.0457,
+   "banRate": 0.0246,
+   "contestRate": 0.0703,
+   "winRate": 0.5385
+  },
+  "21": {
+   "picks": 129,
+   "bans": 90,
+   "wins": 60,
+   "pickRate": 0.2267,
+   "banRate": 0.1582,
+   "contestRate": 0.3849,
+   "winRate": 0.4651
+  },
+  "22": {
+   "picks": 45,
+   "bans": 27,
+   "wins": 20,
+   "pickRate": 0.0791,
+   "banRate": 0.0475,
+   "contestRate": 0.1265,
+   "winRate": 0.4444
+  },
+  "23": {
+   "picks": 20,
+   "bans": 16,
+   "wins": 9,
+   "pickRate": 0.0351,
+   "banRate": 0.0281,
+   "contestRate": 0.0633,
+   "winRate": 0.45
+  },
+  "25": {
+   "picks": 25,
+   "bans": 16,
+   "wins": 13,
+   "pickRate": 0.0439,
+   "banRate": 0.0281,
+   "contestRate": 0.0721,
+   "winRate": 0.52
+  },
+  "26": {
+   "picks": 101,
+   "bans": 50,
+   "wins": 52,
+   "pickRate": 0.1775,
+   "banRate": 0.0879,
+   "contestRate": 0.2654,
+   "winRate": 0.5149
+  },
+  "27": {
+   "picks": 10,
+   "bans": 6,
+   "wins": 4,
+   "pickRate": 0.0176,
+   "banRate": 0.0105,
+   "contestRate": 0.0281,
+   "winRate": 0.4
+  },
+  "28": {
+   "picks": 52,
+   "bans": 66,
+   "wins": 26,
+   "pickRate": 0.0914,
+   "banRate": 0.116,
+   "contestRate": 0.2074,
+   "winRate": 0.5
+  },
+  "29": {
+   "picks": 59,
+   "bans": 43,
+   "wins": 30,
+   "pickRate": 0.1037,
+   "banRate": 0.0756,
+   "contestRate": 0.1793,
+   "winRate": 0.5085
+  },
+  "30": {
+   "picks": 35,
+   "bans": 4,
+   "wins": 16,
+   "pickRate": 0.0615,
+   "banRate": 0.007,
+   "contestRate": 0.0685,
+   "winRate": 0.4571
+  },
+  "31": {
+   "picks": 70,
+   "bans": 14,
+   "wins": 33,
+   "pickRate": 0.123,
+   "banRate": 0.0246,
+   "contestRate": 0.1476,
+   "winRate": 0.4714
+  },
+  "32": {
+   "picks": 0,
+   "bans": 3,
+   "wins": 0,
+   "pickRate": 0,
+   "banRate": 0.0053,
+   "contestRate": 0.0053,
+   "winRate": 0.5
+  },
+  "33": {
+   "picks": 37,
+   "bans": 54,
+   "wins": 21,
+   "pickRate": 0.065,
+   "banRate": 0.0949,
+   "contestRate": 0.1599,
+   "winRate": 0.5676
+  },
+  "34": {
+   "picks": 7,
+   "bans": 24,
+   "wins": 4,
+   "pickRate": 0.0123,
+   "banRate": 0.0422,
+   "contestRate": 0.0545,
+   "winRate": 0.5714
+  },
+  "35": {
+   "picks": 24,
+   "bans": 36,
+   "wins": 12,
+   "pickRate": 0.0422,
+   "banRate": 0.0633,
+   "contestRate": 0.1054,
+   "winRate": 0.5
+  },
+  "36": {
+   "picks": 74,
+   "bans": 158,
+   "wins": 40,
+   "pickRate": 0.1301,
+   "banRate": 0.2777,
+   "contestRate": 0.4077,
+   "winRate": 0.5405
+  },
+  "37": {
+   "picks": 17,
+   "bans": 4,
+   "wins": 8,
+   "pickRate": 0.0299,
+   "banRate": 0.007,
+   "contestRate": 0.0369,
+   "winRate": 0.4706
+  },
+  "38": {
+   "picks": 71,
+   "bans": 205,
+   "wins": 36,
+   "pickRate": 0.1248,
+   "banRate": 0.3603,
+   "contestRate": 0.4851,
+   "winRate": 0.507
+  },
+  "39": {
+   "picks": 39,
+   "bans": 58,
+   "wins": 13,
+   "pickRate": 0.0685,
+   "banRate": 0.1019,
+   "contestRate": 0.1705,
+   "winRate": 0.3333
+  },
+  "40": {
+   "picks": 11,
+   "bans": 2,
+   "wins": 3,
+   "pickRate": 0.0193,
+   "banRate": 0.0035,
+   "contestRate": 0.0228,
+   "winRate": 0.2727
+  },
+  "41": {
+   "picks": 19,
+   "bans": 38,
+   "wins": 11,
+   "pickRate": 0.0334,
+   "banRate": 0.0668,
+   "contestRate": 0.1002,
+   "winRate": 0.5789
+  },
+  "42": {
+   "picks": 7,
+   "bans": 1,
+   "wins": 3,
+   "pickRate": 0.0123,
+   "banRate": 0.0018,
+   "contestRate": 0.0141,
+   "winRate": 0.4286
+  },
+  "43": {
+   "picks": 14,
+   "bans": 13,
+   "wins": 4,
+   "pickRate": 0.0246,
+   "banRate": 0.0228,
+   "contestRate": 0.0475,
+   "winRate": 0.2857
+  },
+  "44": {
+   "picks": 5,
+   "bans": 5,
+   "wins": 3,
+   "pickRate": 0.0088,
+   "banRate": 0.0088,
+   "contestRate": 0.0176,
+   "winRate": 0.6
+  },
+  "45": {
+   "picks": 0,
+   "bans": 1,
+   "wins": 0,
+   "pickRate": 0,
+   "banRate": 0.0018,
+   "contestRate": 0.0018,
+   "winRate": 0.5
+  },
+  "46": {
+   "picks": 17,
+   "bans": 26,
+   "wins": 6,
+   "pickRate": 0.0299,
+   "banRate": 0.0457,
+   "contestRate": 0.0756,
+   "winRate": 0.3529
+  },
+  "47": {
+   "picks": 57,
+   "bans": 201,
+   "wins": 25,
+   "pickRate": 0.1002,
+   "banRate": 0.3533,
+   "contestRate": 0.4534,
+   "winRate": 0.4386
+  },
+  "48": {
+   "picks": 45,
+   "bans": 32,
+   "wins": 18,
+   "pickRate": 0.0791,
+   "banRate": 0.0562,
+   "contestRate": 0.1353,
+   "winRate": 0.4
+  },
+  "49": {
+   "picks": 3,
+   "bans": 1,
+   "wins": 0,
+   "pickRate": 0.0053,
+   "banRate": 0.0018,
+   "contestRate": 0.007,
+   "winRate": 0
+  },
+  "50": {
+   "picks": 3,
+   "bans": 1,
+   "wins": 2,
+   "pickRate": 0.0053,
+   "banRate": 0.0018,
+   "contestRate": 0.007,
+   "winRate": 0.6667
+  },
+  "51": {
+   "picks": 172,
+   "bans": 308,
+   "wins": 86,
+   "pickRate": 0.3023,
+   "banRate": 0.5413,
+   "contestRate": 0.8436,
+   "winRate": 0.5
+  },
+  "52": {
+   "picks": 6,
+   "bans": 0,
+   "wins": 3,
+   "pickRate": 0.0105,
+   "banRate": 0,
+   "contestRate": 0.0105,
+   "winRate": 0.5
+  },
+  "53": {
+   "picks": 78,
+   "bans": 137,
+   "wins": 39,
+   "pickRate": 0.1371,
+   "banRate": 0.2408,
+   "contestRate": 0.3779,
+   "winRate": 0.5
+  },
+  "54": {
+   "picks": 33,
+   "bans": 53,
+   "wins": 16,
+   "pickRate": 0.058,
+   "banRate": 0.0931,
+   "contestRate": 0.1511,
+   "winRate": 0.4848
+  },
+  "55": {
+   "picks": 58,
+   "bans": 80,
+   "wins": 32,
+   "pickRate": 0.1019,
+   "banRate": 0.1406,
+   "contestRate": 0.2425,
+   "winRate": 0.5517
+  },
+  "56": {
+   "picks": 29,
+   "bans": 27,
+   "wins": 14,
+   "pickRate": 0.051,
+   "banRate": 0.0475,
+   "contestRate": 0.0984,
+   "winRate": 0.4828
+  },
+  "57": {
+   "picks": 8,
+   "bans": 4,
+   "wins": 5,
+   "pickRate": 0.0141,
+   "banRate": 0.007,
+   "contestRate": 0.0211,
+   "winRate": 0.625
+  },
+  "58": {
+   "picks": 62,
+   "bans": 53,
+   "wins": 30,
+   "pickRate": 0.109,
+   "banRate": 0.0931,
+   "contestRate": 0.2021,
+   "winRate": 0.4839
+  },
+  "59": {
+   "picks": 18,
+   "bans": 162,
+   "wins": 10,
+   "pickRate": 0.0316,
+   "banRate": 0.2847,
+   "contestRate": 0.3163,
+   "winRate": 0.5556
+  },
+  "60": {
+   "picks": 26,
+   "bans": 69,
+   "wins": 16,
+   "pickRate": 0.0457,
+   "banRate": 0.1213,
+   "contestRate": 0.167,
+   "winRate": 0.6154
+  },
+  "61": {
+   "picks": 6,
+   "bans": 10,
+   "wins": 3,
+   "pickRate": 0.0105,
+   "banRate": 0.0176,
+   "contestRate": 0.0281,
+   "winRate": 0.5
+  },
+  "62": {
+   "picks": 4,
+   "bans": 0,
+   "wins": 2,
+   "pickRate": 0.007,
+   "banRate": 0,
+   "contestRate": 0.007,
+   "winRate": 0.5
+  },
+  "63": {
+   "picks": 8,
+   "bans": 7,
+   "wins": 3,
+   "pickRate": 0.0141,
+   "banRate": 0.0123,
+   "contestRate": 0.0264,
+   "winRate": 0.375
+  },
+  "64": {
+   "picks": 19,
+   "bans": 1,
+   "wins": 6,
+   "pickRate": 0.0334,
+   "banRate": 0.0018,
+   "contestRate": 0.0351,
+   "winRate": 0.3158
+  },
+  "65": {
+   "picks": 37,
+   "bans": 56,
+   "wins": 19,
+   "pickRate": 0.065,
+   "banRate": 0.0984,
+   "contestRate": 0.1634,
+   "winRate": 0.5135
+  },
+  "66": {
+   "picks": 6,
+   "bans": 4,
+   "wins": 3,
+   "pickRate": 0.0105,
+   "banRate": 0.007,
+   "contestRate": 0.0176,
+   "winRate": 0.5
+  },
+  "67": {
+   "picks": 24,
+   "bans": 54,
+   "wins": 11,
+   "pickRate": 0.0422,
+   "banRate": 0.0949,
+   "contestRate": 0.1371,
+   "winRate": 0.4583
+  },
+  "68": {
+   "picks": 15,
+   "bans": 8,
+   "wins": 9,
+   "pickRate": 0.0264,
+   "banRate": 0.0141,
+   "contestRate": 0.0404,
+   "winRate": 0.6
+  },
+  "69": {
+   "picks": 110,
+   "bans": 209,
+   "wins": 58,
+   "pickRate": 0.1933,
+   "banRate": 0.3673,
+   "contestRate": 0.5606,
+   "winRate": 0.5273
+  },
+  "70": {
+   "picks": 16,
+   "bans": 30,
+   "wins": 7,
+   "pickRate": 0.0281,
+   "banRate": 0.0527,
+   "contestRate": 0.0808,
+   "winRate": 0.4375
+  },
+  "71": {
+   "picks": 28,
+   "bans": 14,
+   "wins": 14,
+   "pickRate": 0.0492,
+   "banRate": 0.0246,
+   "contestRate": 0.0738,
+   "winRate": 0.5
+  },
+  "72": {
+   "picks": 20,
+   "bans": 17,
+   "wins": 11,
+   "pickRate": 0.0351,
+   "banRate": 0.0299,
+   "contestRate": 0.065,
+   "winRate": 0.55
+  },
+  "73": {
+   "picks": 24,
+   "bans": 15,
+   "wins": 14,
+   "pickRate": 0.0422,
+   "banRate": 0.0264,
+   "contestRate": 0.0685,
+   "winRate": 0.5833
+  },
+  "74": {
+   "picks": 58,
+   "bans": 94,
+   "wins": 36,
+   "pickRate": 0.1019,
+   "banRate": 0.1652,
+   "contestRate": 0.2671,
+   "winRate": 0.6207
+  },
+  "75": {
+   "picks": 52,
+   "bans": 54,
+   "wins": 22,
+   "pickRate": 0.0914,
+   "banRate": 0.0949,
+   "contestRate": 0.1863,
+   "winRate": 0.4231
+  },
+  "76": {
+   "picks": 4,
+   "bans": 3,
+   "wins": 3,
+   "pickRate": 0.007,
+   "banRate": 0.0053,
+   "contestRate": 0.0123,
+   "winRate": 0.75
+  },
+  "77": {
+   "picks": 41,
+   "bans": 121,
+   "wins": 26,
+   "pickRate": 0.0721,
+   "banRate": 0.2127,
+   "contestRate": 0.2847,
+   "winRate": 0.6341
+  },
+  "78": {
+   "picks": 25,
+   "bans": 52,
+   "wins": 13,
+   "pickRate": 0.0439,
+   "banRate": 0.0914,
+   "contestRate": 0.1353,
+   "winRate": 0.52
+  },
+  "79": {
+   "picks": 21,
+   "bans": 18,
+   "wins": 8,
+   "pickRate": 0.0369,
+   "banRate": 0.0316,
+   "contestRate": 0.0685,
+   "winRate": 0.381
+  },
+  "80": {
+   "picks": 30,
+   "bans": 433,
+   "wins": 20,
+   "pickRate": 0.0527,
+   "banRate": 0.761,
+   "contestRate": 0.8137,
+   "winRate": 0.6667
+  },
+  "81": {
+   "picks": 1,
+   "bans": 4,
+   "wins": 0,
+   "pickRate": 0.0018,
+   "banRate": 0.007,
+   "contestRate": 0.0088,
+   "winRate": 0
+  },
+  "82": {
+   "picks": 11,
+   "bans": 28,
+   "wins": 7,
+   "pickRate": 0.0193,
+   "banRate": 0.0492,
+   "contestRate": 0.0685,
+   "winRate": 0.6364
+  },
+  "83": {
+   "picks": 95,
+   "bans": 438,
+   "wins": 51,
+   "pickRate": 0.167,
+   "banRate": 0.7698,
+   "contestRate": 0.9367,
+   "winRate": 0.5368
+  },
+  "84": {
+   "picks": 23,
+   "bans": 3,
+   "wins": 13,
+   "pickRate": 0.0404,
+   "banRate": 0.0053,
+   "contestRate": 0.0457,
+   "winRate": 0.5652
+  },
+  "85": {
+   "picks": 91,
+   "bans": 109,
+   "wins": 39,
+   "pickRate": 0.1599,
+   "banRate": 0.1916,
+   "contestRate": 0.3515,
+   "winRate": 0.4286
+  },
+  "86": {
+   "picks": 161,
+   "bans": 83,
+   "wins": 70,
+   "pickRate": 0.283,
+   "banRate": 0.1459,
+   "contestRate": 0.4288,
+   "winRate": 0.4348
+  },
+  "87": {
+   "picks": 31,
+   "bans": 10,
+   "wins": 13,
+   "pickRate": 0.0545,
+   "banRate": 0.0176,
+   "contestRate": 0.0721,
+   "winRate": 0.4194
+  },
+  "88": {
+   "picks": 14,
+   "bans": 29,
+   "wins": 7,
+   "pickRate": 0.0246,
+   "banRate": 0.051,
+   "contestRate": 0.0756,
+   "winRate": 0.5
+  },
+  "89": {
+   "picks": 6,
+   "bans": 35,
+   "wins": 2,
+   "pickRate": 0.0105,
+   "banRate": 0.0615,
+   "contestRate": 0.0721,
+   "winRate": 0.3333
+  },
+  "90": {
+   "picks": 102,
+   "bans": 228,
+   "wins": 64,
+   "pickRate": 0.1793,
+   "banRate": 0.4007,
+   "contestRate": 0.58,
+   "winRate": 0.6275
+  },
+  "91": {
+   "picks": 19,
+   "bans": 42,
+   "wins": 13,
+   "pickRate": 0.0334,
+   "banRate": 0.0738,
+   "contestRate": 0.1072,
+   "winRate": 0.6842
+  },
+  "92": {
+   "picks": 4,
+   "bans": 8,
+   "wins": 1,
+   "pickRate": 0.007,
+   "banRate": 0.0141,
+   "contestRate": 0.0211,
+   "winRate": 0.25
+  },
+  "93": {
+   "picks": 9,
+   "bans": 12,
+   "wins": 5,
+   "pickRate": 0.0158,
+   "banRate": 0.0211,
+   "contestRate": 0.0369,
+   "winRate": 0.5556
+  },
+  "94": {
+   "picks": 15,
+   "bans": 7,
+   "wins": 2,
+   "pickRate": 0.0264,
+   "banRate": 0.0123,
+   "contestRate": 0.0387,
+   "winRate": 0.1333
+  },
+  "95": {
+   "picks": 1,
+   "bans": 4,
+   "wins": 0,
+   "pickRate": 0.0018,
+   "banRate": 0.007,
+   "contestRate": 0.0088,
+   "winRate": 0
+  },
+  "96": {
+   "picks": 87,
+   "bans": 81,
+   "wins": 52,
+   "pickRate": 0.1529,
+   "banRate": 0.1424,
+   "contestRate": 0.2953,
+   "winRate": 0.5977
+  },
+  "97": {
+   "picks": 20,
+   "bans": 14,
+   "wins": 7,
+   "pickRate": 0.0351,
+   "banRate": 0.0246,
+   "contestRate": 0.0598,
+   "winRate": 0.35
+  },
+  "98": {
+   "picks": 59,
+   "bans": 84,
+   "wins": 33,
+   "pickRate": 0.1037,
+   "banRate": 0.1476,
+   "contestRate": 0.2513,
+   "winRate": 0.5593
+  },
+  "99": {
+   "picks": 11,
+   "bans": 12,
+   "wins": 5,
+   "pickRate": 0.0193,
+   "banRate": 0.0211,
+   "contestRate": 0.0404,
+   "winRate": 0.4545
+  },
+  "100": {
+   "picks": 112,
+   "bans": 71,
+   "wins": 54,
+   "pickRate": 0.1968,
+   "banRate": 0.1248,
+   "contestRate": 0.3216,
+   "winRate": 0.4821
+  },
+  "101": {
+   "picks": 20,
+   "bans": 9,
+   "wins": 7,
+   "pickRate": 0.0351,
+   "banRate": 0.0158,
+   "contestRate": 0.051,
+   "winRate": 0.35
+  },
+  "102": {
+   "picks": 7,
+   "bans": 1,
+   "wins": 4,
+   "pickRate": 0.0123,
+   "banRate": 0.0018,
+   "contestRate": 0.0141,
+   "winRate": 0.5714
+  },
+  "103": {
+   "picks": 1,
+   "bans": 0,
+   "wins": 0,
+   "pickRate": 0.0018,
+   "banRate": 0,
+   "contestRate": 0.0018,
+   "winRate": 0
+  },
+  "104": {
+   "picks": 1,
+   "bans": 10,
+   "wins": 0,
+   "pickRate": 0.0018,
+   "banRate": 0.0176,
+   "contestRate": 0.0193,
+   "winRate": 0
+  },
+  "105": {
+   "picks": 78,
+   "bans": 54,
+   "wins": 40,
+   "pickRate": 0.1371,
+   "banRate": 0.0949,
+   "contestRate": 0.232,
+   "winRate": 0.5128
+  },
+  "106": {
+   "picks": 155,
+   "bans": 174,
+   "wins": 79,
+   "pickRate": 0.2724,
+   "banRate": 0.3058,
+   "contestRate": 0.5782,
+   "winRate": 0.5097
+  },
+  "107": {
+   "picks": 124,
+   "bans": 106,
+   "wins": 78,
+   "pickRate": 0.2179,
+   "banRate": 0.1863,
+   "contestRate": 0.4042,
+   "winRate": 0.629
+  },
+  "108": {
+   "picks": 86,
+   "bans": 103,
+   "wins": 29,
+   "pickRate": 0.1511,
+   "banRate": 0.181,
+   "contestRate": 0.3322,
+   "winRate": 0.3372
+  },
+  "109": {
+   "picks": 54,
+   "bans": 85,
+   "wins": 28,
+   "pickRate": 0.0949,
+   "banRate": 0.1494,
+   "contestRate": 0.2443,
+   "winRate": 0.5185
+  },
+  "110": {
+   "picks": 106,
+   "bans": 50,
+   "wins": 48,
+   "pickRate": 0.1863,
+   "banRate": 0.0879,
+   "contestRate": 0.2742,
+   "winRate": 0.4528
+  },
+  "111": {
+   "picks": 8,
+   "bans": 9,
+   "wins": 3,
+   "pickRate": 0.0141,
+   "banRate": 0.0158,
+   "contestRate": 0.0299,
+   "winRate": 0.375
+  },
+  "112": {
+   "picks": 74,
+   "bans": 42,
+   "wins": 41,
+   "pickRate": 0.1301,
+   "banRate": 0.0738,
+   "contestRate": 0.2039,
+   "winRate": 0.5541
+  },
+  "113": {
+   "picks": 3,
+   "bans": 2,
+   "wins": 0,
+   "pickRate": 0.0053,
+   "banRate": 0.0035,
+   "contestRate": 0.0088,
+   "winRate": 0
+  },
+  "114": {
+   "picks": 18,
+   "bans": 33,
+   "wins": 11,
+   "pickRate": 0.0316,
+   "banRate": 0.058,
+   "contestRate": 0.0896,
+   "winRate": 0.6111
+  },
+  "119": {
+   "picks": 48,
+   "bans": 11,
+   "wins": 23,
+   "pickRate": 0.0844,
+   "banRate": 0.0193,
+   "contestRate": 0.1037,
+   "winRate": 0.4792
+  },
+  "120": {
+   "picks": 97,
+   "bans": 108,
+   "wins": 43,
+   "pickRate": 0.1705,
+   "banRate": 0.1898,
+   "contestRate": 0.3603,
+   "winRate": 0.4433
+  },
+  "121": {
+   "picks": 44,
+   "bans": 19,
+   "wins": 25,
+   "pickRate": 0.0773,
+   "banRate": 0.0334,
+   "contestRate": 0.1107,
+   "winRate": 0.5682
+  },
+  "123": {
+   "picks": 180,
+   "bans": 112,
+   "wins": 96,
+   "pickRate": 0.3163,
+   "banRate": 0.1968,
+   "contestRate": 0.5132,
+   "winRate": 0.5333
+  },
+  "126": {
+   "picks": 44,
+   "bans": 38,
+   "wins": 19,
+   "pickRate": 0.0773,
+   "banRate": 0.0668,
+   "contestRate": 0.1441,
+   "winRate": 0.4318
+  },
+  "128": {
+   "picks": 147,
+   "bans": 248,
+   "wins": 69,
+   "pickRate": 0.2583,
+   "banRate": 0.4359,
+   "contestRate": 0.6942,
+   "winRate": 0.4694
+  },
+  "129": {
+   "picks": 25,
+   "bans": 28,
+   "wins": 6,
+   "pickRate": 0.0439,
+   "banRate": 0.0492,
+   "contestRate": 0.0931,
+   "winRate": 0.24
+  },
+  "131": {
+   "picks": 88,
+   "bans": 28,
+   "wins": 48,
+   "pickRate": 0.1547,
+   "banRate": 0.0492,
+   "contestRate": 0.2039,
+   "winRate": 0.5455
+  },
+  "135": {
+   "picks": 68,
+   "bans": 119,
+   "wins": 32,
+   "pickRate": 0.1195,
+   "banRate": 0.2091,
+   "contestRate": 0.3286,
+   "winRate": 0.4706
+  },
+  "136": {
+   "picks": 8,
+   "bans": 13,
+   "wins": 4,
+   "pickRate": 0.0141,
+   "banRate": 0.0228,
+   "contestRate": 0.0369,
+   "winRate": 0.5
+  },
+  "137": {
+   "picks": 27,
+   "bans": 15,
+   "wins": 12,
+   "pickRate": 0.0475,
+   "banRate": 0.0264,
+   "contestRate": 0.0738,
+   "winRate": 0.4444
+  },
+  "138": {
+   "picks": 35,
+   "bans": 45,
+   "wins": 16,
+   "pickRate": 0.0615,
+   "banRate": 0.0791,
+   "contestRate": 0.1406,
+   "winRate": 0.4571
+  },
+  "145": {
+   "picks": 66,
+   "bans": 136,
+   "wins": 32,
+   "pickRate": 0.116,
+   "banRate": 0.239,
+   "contestRate": 0.355,
+   "winRate": 0.4848
+  },
+  "155": {
+   "picks": 83,
+   "bans": 110,
+   "wins": 44,
+   "pickRate": 0.1459,
+   "banRate": 0.1933,
+   "contestRate": 0.3392,
+   "winRate": 0.5301
+  }
+ }
+}

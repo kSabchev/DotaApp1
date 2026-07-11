@@ -9,7 +9,7 @@ import HeroItemBuildSection from '../components/hero/HeroItemBuildSection';
 import HeroCounterItemsSection from '../components/hero/HeroCounterItemsSection';
 import HeroProsSection from '../components/hero/HeroProsSection';
 import { computeTeamCapabilities, CAPABILITY_ORDER, CAPABILITY_LABELS } from '../../../shared/capabilities';
-import { getHeroMeta, TIER_LABEL, TIER_COLOR } from '../data/metaService';
+import { getHeroMeta, getProHeroMeta, getProMetaWindow, TIER_LABEL, TIER_COLOR } from '../data/metaService';
 
 const ATTR_LABEL: Record<string, string> = {
   strength: 'Strength', agility: 'Agility', intelligence: 'Intelligence', universal: 'Universal',
@@ -41,6 +41,8 @@ export default function HeroDetailPage() {
 
   const caps = computeTeamCapabilities([hero], 0);
   const meta = getHeroMeta(hero.id);
+  const proMeta = getProHeroMeta(hero.id);
+  const proWindow = getProMetaWindow();
 
   return (
     <PageShell>
@@ -65,6 +67,12 @@ export default function HeroDetailPage() {
             {hero.metaRole && (<><span>·</span><span className="uppercase">{hero.metaRole}</span></>)}
           </div>
           <PlaystyleBadges hero={hero} />
+          {proMeta && proWindow && proMeta.picks + proMeta.bans > 0 && (
+            <p className="text-[10px] text-amber-300/90">
+              Tournament meta: picked {proMeta.picks}× / banned {proMeta.bans}× ({Math.round(proMeta.contestRate * 100)}% contest,
+              {' '}{Math.round(proMeta.winRate * 100)}% win rate) across {proWindow.matches} pro games from {proWindow.leagues} recent leagues
+            </p>
+          )}
         </div>
         <Link to="/heroes" className="ml-auto text-[10px] text-gray-500 hover:text-dota-accent transition-colors shrink-0">
           ← all heroes

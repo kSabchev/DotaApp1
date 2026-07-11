@@ -190,7 +190,7 @@ async function main() {
 
   // ── Table 7.1 summary ────────────────────────────────────────────────────────
   console.log('\n══════════════════════ TABLE 7.1 SUMMARY ══════════════════════════');
-  console.log(`Prediction AUC                 : see train.ts output (0.5768, 5-fold CV)`);
+  console.log(`Prediction AUC                 : see \`npm run train -- pro pairs\` output (5-fold CV)`);
   console.log(`Top-1 agreement                : ${(full.top1 * 100).toFixed(1)}%`);
   console.log(`Top-3 agreement                : ${(full.top3 * 100).toFixed(1)}%`);
   console.log(`Top-5 agreement                : ${(full.top5 * 100).toFixed(1)}%`);

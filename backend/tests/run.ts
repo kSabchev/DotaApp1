@@ -10,6 +10,7 @@ import './heroTraits.test';
 import './heroPlaystyles.test';
 import './teamIdentity.test';
 import './showcaseDrafts.test';
+import './proMeta.test';
 import './liveMatchup.test';
 import './pickTiming.test';
 import './matchupGrades.test';
